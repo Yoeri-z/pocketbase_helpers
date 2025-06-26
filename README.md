@@ -11,12 +11,12 @@ This package simplifies working with typed data and handles PocketBase's quirks 
 ### Without pocketbase_helpers:
 
 ```dart
-Future<TableResult<MyRecord>> getOpenRecords() async {
+Future<TypedResultList<MyRecord>> getOpenRecords() async {
   final filter = pb.filter('status = {:status}', {'status': 'open'});
 
   final result = await pb.collection('my_collection').getList(filter: filter);
 
-  return TableResult(
+  return TypedResultList(
     result.items.map((record) => MyRecord.fromJson(
       // Remove empty strings to prevent parse errors
       pruneEmptyStrings(record.toJson()),
