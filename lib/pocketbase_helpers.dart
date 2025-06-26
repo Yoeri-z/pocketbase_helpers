@@ -3,7 +3,7 @@
 /// More dartdocs go here.
 library;
 
-export 'src/table_models.dart';
+export 'src/models.dart';
 export 'src/collection_helper.dart';
 export 'src/base_helper.dart';
 export 'src/helper_utils.dart';
