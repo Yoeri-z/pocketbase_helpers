@@ -52,4 +52,12 @@ abstract final class HelperUtils {
         ? '${params.ascending ? '+' : '-'}${params.sortColumn}'
         : null;
   }
+
+  ///Pocketbase does not return null values, but most dart serializable packages do support null values.
+  ///This method cleans up a map, making all empty values null
+  static Map<String, dynamic> cleanMap(Map<String, dynamic> map) {
+    return map..removeWhere(
+      (_, value) => (value is String && value.isEmpty) || value == const {},
+    );
+  }
 }

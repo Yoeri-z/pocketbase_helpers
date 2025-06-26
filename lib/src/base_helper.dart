@@ -64,7 +64,7 @@ class BaseHelper {
         );
 
     return TableResult(
-      result.items.map((record) => mapper(record.toJson()..clean())).toList(),
+      result.items.map((record) => mapper(record.toJson().clean())).toList(),
       page: result.page,
       perPage: result.perPage,
       totalItems: result.totalItems,
@@ -112,7 +112,7 @@ class BaseHelper {
     }
 
     return TableResult(
-      result.items.map((e) => mapper(e.toJson()..clean())).toList(),
+      result.items.map((e) => mapper(e.toJson().clean())).toList(),
       page: result.page,
       perPage: perPage,
       totalItems: result.totalItems,
@@ -153,7 +153,7 @@ class BaseHelper {
           );
     }
 
-    return result.map((e) => mapper(e.toJson()..clean())).toList();
+    return result.map((e) => mapper(e.toJson().clean())).toList();
   }
 
   ///Get a single record from a collection by its id
@@ -167,7 +167,7 @@ class BaseHelper {
     final result = await pb
         .collection(collection)
         .getOne(id, query: query ?? const {}, headers: headers ?? const {});
-    return mapper(result.toJson()..clean());
+    return mapper(result.toJson().clean());
   }
 
   ///Create a new record from the `data` argument
@@ -185,7 +185,7 @@ class BaseHelper {
           query: query ?? const {},
           headers: headers ?? const {},
         );
-    return mapper(result.toJson()..clean());
+    return mapper(result.toJson().clean());
   }
 
   ///Update the supplied record, effectively this syncs the record that is supplied the database
@@ -205,7 +205,7 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return mapper(result.toJson()..clean());
+    return mapper(result.toJson().clean());
   }
 
   ///Delete a record by its id
@@ -258,7 +258,7 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return mapper(record.toJson()..clean());
+    return mapper(record.toJson().clean());
   }
 
   ///Remove files from a record, this takes:
@@ -282,15 +282,15 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return mapper(record.toJson()..clean());
+    return mapper(record.toJson().clean());
   }
 }
 
 //extension on map to clean up jsons, this avoids unexpected behaviour for nullable fields
 //For example a field like `DateTime?` will throw a parse error because pocketbase does empty strings instead of nulls
 //clean removes empty strings from the map so they are null
-extension _MapClean on Map {
-  void clean() {
-    removeWhere((_, value) => value is String && value.isEmpty);
+extension _MapClean on Map<String, dynamic> {
+  Map<String, dynamic> clean() {
+    return HelperUtils.cleanMap(this);
   }
 }
