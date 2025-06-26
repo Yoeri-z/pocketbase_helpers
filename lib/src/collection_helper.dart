@@ -53,14 +53,14 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///that will all be present in the filter.
   ///
   ///This method was designed with tables in mind and is especially to make ui tables with searchbars
-  Future<TableResult<T>> getTabledRecords({
+  Future<TableResult<T>> getTabled({
     required TableParams params,
     required List<String> searchableColumns,
     List<String>? otherFilters,
     Map<String, dynamic>? otherParams,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.getTabledRecords(
+  }) => _helper.getTabled(
     collection,
     params: params,
     searchableColumns: searchableColumns,
@@ -113,11 +113,11 @@ class CollectionHelper<T extends PocketBaseRecord> {
   );
 
   ///Get a single record from a collection by its id
-  Future<T> getSingleRecord(
+  Future<T> getSingle(
     String id, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.getSingleRecord(
+  }) => _helper.getSingle(
     collection,
     id: id,
     mapper: mapper,
@@ -126,11 +126,11 @@ class CollectionHelper<T extends PocketBaseRecord> {
   );
 
   ///Create a new record from the `data` argument
-  Future<T> createRecord({
+  Future<T> create({
     required Map<String, dynamic> data,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.createRecord(
+  }) => _helper.create(
     collection,
     data: data,
     mapper: mapper,
@@ -139,11 +139,11 @@ class CollectionHelper<T extends PocketBaseRecord> {
   );
 
   ///Update the supplied record, effectively this syncs the record that is supplied the database
-  Future<T> updateRecord(
+  Future<T> update(
     T record, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.updateRecord(
+  }) => _helper.update(
     collection,
     record: record,
     mapper: mapper,
@@ -152,18 +152,17 @@ class CollectionHelper<T extends PocketBaseRecord> {
   );
 
   ///Delete a record by its id
-  Future<void> deleteRecord(
+  Future<void> delete(
     String id, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) =>
-      _helper.deleteRecord(collection, id: id, query: query, headers: headers);
+  }) => _helper.delete(collection, id: id, query: query, headers: headers);
 
   ///Get the absolute file url for a file, this function takes
   /// - record id
   /// - filename
   /// and returns a correct Uri that can be used to retrieve it form the database
-  Uri getFileUrl(String id, String filename) {
+  Uri getFileUri(String id, String filename) {
     return pb.buildURL('api/files/$collection/$id/$filename');
   }
 

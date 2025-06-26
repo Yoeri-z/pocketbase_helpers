@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:http/http.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/pocketbase_helpers.dart';
-import 'package:pocketbase_helpers/src/interfaces.dart';
 
 ///A function that maps a record to an object
 typedef RecordMapper<T extends Object> = T Function(Map<String, dynamic> map);
@@ -15,6 +14,7 @@ typedef RecordMapper<T extends Object> = T Function(Map<String, dynamic> map);
 class BaseHelper {
   BaseHelper(this.pb);
 
+  ///The pocketbase instance used by this helper
   final PocketBase pb;
 
   ///Execute a search on records based on requested table data.
@@ -27,7 +27,7 @@ class BaseHelper {
   ///
   ///This method was designed with tables in mind and is especially to make ui tables with searchbars.
   ///Also works nice with flutters paginated table.
-  Future<TableResult<T>> getTabledRecords<T extends Object>(
+  Future<TableResult<T>> getTabled<T extends Object>(
     String collection, {
     required TableParams params,
     required List<String> searchableColumns,
@@ -157,7 +157,7 @@ class BaseHelper {
   }
 
   ///Get a single record from a collection by its id
-  Future<T> getSingleRecord<T extends Object>(
+  Future<T> getSingle<T extends Object>(
     String collection, {
     required String id,
     required RecordMapper<T> mapper,
@@ -171,7 +171,7 @@ class BaseHelper {
   }
 
   ///Create a new record from the `data` argument
-  Future<T> createRecord<T extends Object>(
+  Future<T> create<T extends Object>(
     String collection, {
     required Map<String, dynamic> data,
     required RecordMapper<T> mapper,
@@ -189,7 +189,7 @@ class BaseHelper {
   }
 
   ///Update the supplied record, effectively this syncs the record that is supplied the database
-  Future<T> updateRecord<T extends PocketBaseRecord>(
+  Future<T> update<T extends PocketBaseRecord>(
     String collection, {
     required T record,
     required RecordMapper<T> mapper,
@@ -209,7 +209,7 @@ class BaseHelper {
   }
 
   ///Delete a record by its id
-  Future<void> deleteRecord(
+  Future<void> delete(
     String collection, {
     required String id,
     Map<String, dynamic>? query,
@@ -225,7 +225,7 @@ class BaseHelper {
   /// - record id
   /// - filename
   /// and returns a correct Uri that can be used to retrieve it form the database
-  Uri getFileUrl(String collection, String id, String filename) {
+  Uri getFileUri(String collection, String id, String filename) {
     return pb.buildURL('api/files/$collection/$id/$filename');
   }
 
