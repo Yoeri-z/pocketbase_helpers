@@ -167,7 +167,6 @@ class CollectionHelper<T extends PocketBaseRecord> {
   Future<T> removeFiles(
     String id, {
     required List<String> fileUrls,
-    required RecordMapper<T> mapper,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.removeFiles(
