@@ -19,8 +19,8 @@ class BaseHelper {
 
   ///Execute a search on records based on requested table data.
   ///Takes `TableParams` and constructs a `TableResult` based on these params.
-  ///Internally this method contructs and advanced filter, that keyword searches all the [searchableColumns]
-  ///for the query provides in [params].
+  ///Internally this method contructs and advanced filter that keyword searches all the [searchableColumns]
+  ///for the query provided in [params].
   ///
   ///If commas are present in this query the query will be comma seperated into multiple keywords
   ///that will all be present in the filter.

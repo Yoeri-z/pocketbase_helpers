@@ -1,34 +1,12 @@
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 
-///A collectionhelper is a class that helps you manage a specific collection.
-///Its main usecase is reducing boilerplate for a lot of common pocketbase queries
-///For example, a common thing that you might do using just pocketbase is this:
-///```dart
-///Future<TableResult<MyRecord>> getOpenRecords() async {
-///   final filter = pb.filter('status = {:status}', {'status' : 'open'});
-///   final result = await pb
-///        .collection('my_collection')
-///        .getList(
-///           filter: filter,
-///        )
-///
-///   return TableResult(
-///     result.items.map((record) => mapper(record.toJson()..clean())).toList(),
-///     page: result.page,
-///     perPage: result.perPage,
-///     totalItems: result.totalItems,
-///     totalPages: result.totalPages,
-///   );
-///}
-///```
-///With a collection helper, a query like this turns into:
-///```dart
-///Future<TableResult<MyRecord>> getOpenRecords() async {
-///   return helper.getList(expr: 'status = {:status}', params: {'status' : 'open'});
-///}
-///```
-///To see what a `CollectionHelper` can do, take a look at its methods
+///A [CollectionHelper] is a class that helps you manage a specific collection.
+///To see what a [CollectionHelper] can do, take a look at its methods.
+///[CollectionHelper] expects the following arguments:
+/// - pb: the pocketbase instance of your application
+/// - collection: the collection this helper operates on
+/// - mapper: a function that converts `Map<String, dynamic>` to your model
 class CollectionHelper<T extends PocketBaseRecord> {
   CollectionHelper(this.pb, {required this.collection, required this.mapper})
     : _helper = BaseHelper(pb);
