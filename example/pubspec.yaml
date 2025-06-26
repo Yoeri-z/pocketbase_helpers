@@ -1,0 +1,21 @@
+name: example
+description: A sample command-line application.
+version: 0.0.1
+publish_to: none
+
+
+environment:
+  sdk: ^3.7.2
+
+# Add regular dependencies here.
+dependencies:
+  dart_mappable: ^4.5.0
+  pocketbase: ^0.23.0
+  pocketbase_helpers:
+    path: ../
+
+dev_dependencies:
+  build_runner: ^2.5.4
+  dart_mappable_builder: ^4.5.0
+  lints: ^5.0.0
+  test: ^1.24.0
