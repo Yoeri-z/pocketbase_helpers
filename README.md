@@ -71,9 +71,9 @@ final paginatedList = helper.getList();
 // Fetch full list
 final list = helper.getFullList();
 
-// Search/sort-friendly paginated fetch
+// Search and sort-friendly paginated fetch
 // allows you to do keyword searches, see inline documentation for more information
-final paginatedList = helper.getTabledRecord(
+final paginatedList = helper.search(
   params: params,
   searchableColumns: [...],
 );
@@ -99,6 +99,25 @@ A more flexible helper where `collection` and `mapper` are specified per method.
 ### HelperUtils
 
 Contains static methods for building queries (mainly used internally, but also available).
+
+Also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the json/map directly.
+
+```dart
+void registerHooks() {
+  HelperUtils.creationHook = (collection, pb, map) {
+    if (pb.authStore.isValid) {
+      //store the creator of every record
+      map['creator_id'] = pb.authStore.record?.id;
+    }
+    return map;
+  };
+
+  HelperUtils.updateHook = (collection, pb, map) {
+    print('updated something');
+    return map;
+  };
+}
+```
 
 ## License and Contributing
 

@@ -18,7 +18,7 @@ class BaseHelper {
   final PocketBase pb;
 
   ///Execute a search on records based on requested table data.
-  ///Takes `TableParams` and constructs a `TableResult` based on these params.
+  ///Takes [SearchParams] and fetches a [TypedResultList].
   ///Internally this method contructs and advanced filter that keyword searches all the [searchableColumns]
   ///for the query provided in [params].
   ///
@@ -27,9 +27,9 @@ class BaseHelper {
   ///
   ///This method was designed with tables in mind and is especially to make ui tables with searchbars.
   ///Also works nice with flutters paginated table.
-  Future<TableResult<T>> getTabled<T extends Object>(
+  Future<TypedResultList<T>> search<T extends Object>(
     String collection, {
-    required TableParams params,
+    required SearchParams params,
     required List<String> searchableColumns,
     required RecordMapper<T> mapper,
     List<String>? otherFilters,
@@ -63,7 +63,7 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return TableResult(
+    return TypedResultList(
       result.items.map((record) => mapper(record.toJson().clean())).toList(),
       page: result.page,
       perPage: result.perPage,
@@ -73,7 +73,7 @@ class BaseHelper {
   }
 
   ///Get a paginated list from a collection, `expr` and `params` fields can be optionally supplied to filter the result
-  Future<TableResult<T>> getList<T extends Object>(
+  Future<TypedResultList<T>> getList<T extends Object>(
     String collection, {
     required RecordMapper<T> mapper,
     String? expr,
@@ -111,7 +111,7 @@ class BaseHelper {
           );
     }
 
-    return TableResult(
+    return TypedResultList(
       result.items.map((e) => mapper(e.toJson().clean())).toList(),
       page: result.page,
       perPage: perPage,

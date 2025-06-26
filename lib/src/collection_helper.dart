@@ -23,7 +23,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   final BaseHelper _helper;
 
   ///Execute a search on records based on requested table data.
-  ///Takes `TableParams` and constructs a `TableResult` based on these params.
+  ///Takes [SearchParams] and fetches a [TypedResultList].
   ///Internally this method contructs and advanced filter, that keyword searches all the [searchableColumns]
   ///for the query provides in [params].
   ///
@@ -31,14 +31,14 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///that will all be present in the filter.
   ///
   ///This method was designed with tables in mind and is especially to make ui tables with searchbars
-  Future<TableResult<T>> getTabled({
-    required TableParams params,
+  Future<TypedResultList<T>> search({
+    required SearchParams params,
     required List<String> searchableColumns,
     List<String>? otherFilters,
     Map<String, dynamic>? otherParams,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.getTabled(
+  }) => _helper.search(
     collection,
     params: params,
     searchableColumns: searchableColumns,
@@ -49,8 +49,8 @@ class CollectionHelper<T extends PocketBaseRecord> {
     headers: headers,
   );
 
-  ///Get a paginated list from a collection, `expr` and `params` fields can be optionally supplied to filter the result
-  Future<TableResult<T>> getList({
+  ///Get a paginated list from a collection, [expr] and [params] fields can be optionally supplied to filter the result
+  Future<TypedResultList<T>> getList({
     String? expr,
     Map<String, dynamic>? params,
     int page = 1,
@@ -72,7 +72,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     headers: headers,
   );
 
-  ///Get a full list from a collection, `expr` and `params` fields can be optionally supplied to filter the result
+  ///Get a full list from a collection, [expr] and [params] fields can be optionally supplied to filter the result
   Future<List<T>> getFullList({
     int batch = 500,
     String? expr,
@@ -103,7 +103,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     headers: headers,
   );
 
-  ///Create a new record from the `data` argument
+  ///Create a new record from the [data] argument
   Future<T> create({
     required Map<String, dynamic> data,
     Map<String, dynamic>? query,

@@ -1,5 +1,5 @@
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketbase_helpers/src/table_models.dart';
+import 'package:pocketbase_helpers/src/models.dart';
 
 ///This class contains static helper functions that do not rely on the pocketbase instance
 abstract final class HelperUtils {
@@ -64,7 +64,7 @@ abstract final class HelperUtils {
   }
 
   ///Get a sort order appropiately formatted to be put into the `sort` field on pocketbase queries
-  static String? getSortOrderFor(TableParams params) {
+  static String? getSortOrderFor(SearchParams params) {
     return params.sortColumn != null
         ? '${params.ascending ? '+' : '-'}${params.sortColumn}'
         : null;
