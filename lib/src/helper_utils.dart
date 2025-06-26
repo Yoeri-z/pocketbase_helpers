@@ -1,7 +1,24 @@
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/src/table_models.dart';
 
 ///This class contains static helper functions that do not rely on the pocketbase instance
 abstract final class HelperUtils {
+  ///Register hook to modify the json that gets sent to the pocketbase server instance on creation
+  static Map<String, dynamic> Function(
+    String collection,
+    PocketBase pb,
+    Map<String, dynamic> map,
+  )
+  creationHook = (_, _, map) => map;
+
+  ///Register hook to modify the json that gets sent to the pocketbase server instance on updates
+  static Map<String, dynamic> Function(
+    String collection,
+    PocketBase pb,
+    Map<String, dynamic> map,
+  )
+  updateHook = (_, _, map) => map;
+
   ///Compose an advanced query string with paramaters, to do keyword searching on a collection
   ///This function takes the following fields:
   /// - query: the keywords to search for, will be comma seperated

@@ -181,10 +181,11 @@ class BaseHelper {
     final result = await pb
         .collection(collection)
         .create(
-          body: data,
+          body: HelperUtils.creationHook(collection, data),
           query: query ?? const {},
           headers: headers ?? const {},
         );
+
     return mapper(result.toJson().clean());
   }
 
@@ -200,7 +201,7 @@ class BaseHelper {
         .collection(collection)
         .update(
           record.id,
-          body: record.toMap(),
+          body: HelperUtils.updateHook(collection, record.toMap()),
           query: query ?? const {},
           headers: headers ?? const {},
         );
