@@ -32,7 +32,7 @@ Future<TypedResultList<MyRecord>> getOpenRecords() async {
 ### With pocketbase_helpers:
 
 ```dart
-Future<TableResult<MyRecord>> getOpenRecords() async {
+Future<TypedResultList<MyRecord>> getOpenRecords() async {
   return helper.getList(
         expr: 'status = {:status}', 
         params: {'status': 'open'},
@@ -100,7 +100,7 @@ A more flexible helper where `collection` and `mapper` are specified per method.
 
 Contains static methods for building queries (mainly used internally, but also available).
 
-Also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the json/map directly.
+Also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the json/map directly before it is sent to the server
 
 ```dart
 void registerHooks() {
