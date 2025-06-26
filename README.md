@@ -1,39 +1,105 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# pocketbase_helpers
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages). 
+A package to make working with PocketBase easier when using serializable models in Dart. It also adds a utility for keyword searching on your collections.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages). 
--->
+## Motivation
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+PocketBase is a great backend for Flutter — lightweight, easy to use, and highly extendable. However, the base [`pocketbase`](https://pub.dev/packages/pocketbase) package does not provide utilities for strongly typed data, which is one of Dart’s main strengths over JavaScript.
 
-## Features
+This package simplifies working with typed data and handles PocketBase's quirks (like empty strings instead of `null`) more gracefully.
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+### Without pocketbase_helpers:
 
 ```dart
-const like = 'sample';
+Future<TableResult<MyRecord>> getOpenRecords() async {
+  final filter = pb.filter('status = {:status}', {'status': 'open'});
+
+  final result = await pb.collection('my_collection').getList(filter: filter);
+
+  return TableResult(
+    result.items.map((record) => MyRecord.fromJson(
+      // Remove empty strings to prevent parse errors
+      pruneEmptyStrings(record.toJson()),
+    )).toList(),
+    page: result.page,
+    perPage: result.perPage,
+    totalItems: result.totalItems,
+    totalPages: result.totalPages,
+  );
+}
 ```
 
-## Additional information
+### With pocketbase_helpers:
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+```dart
+Future<TableResult<MyRecord>> getOpenRecords() async {
+  return helper.getList(
+        expr: 'status = {:status}', 
+        params: {'status': 'open'},
+    );
+}
+```
+
+## Getting Started
+
+### Creating a CollectionHelper:
+
+```dart
+final helper = CollectionHelper(
+  pb //your pocketbase instance,
+  collection: 'my_collection',
+  mapper: MyRecord.fromMap,
+);
+```
+
+Ensure your models implement `PocketBaseRecord`:
+
+```dart
+class MyRecord implements PocketBaseRecord {
+  // your model code
+}
+```
+
+You can use any serializer that converts a `Map<String, dynamic>` to your model.
+
+### Available Methods
+
+```dart
+// paginated list fetch
+final paginatedList = helper.getList();
+
+// Fetch full list
+final list = helper.getFullList();
+
+// Search/sort-friendly paginated fetch
+// allows you to do keyword searches, see inline documentation for more information
+final paginatedList = helper.getTabledRecord(
+  params: params,
+  searchableColumns: [...],
+);
+
+// CRUD operations
+final record = helper.getSingle(id);
+final record = helper.create(data: data);
+final record = helper.update(record);
+helper.delete(id);
+
+// File utilities
+final uri = helper.getFileUri(id, filename);
+final record = helper.addFiles(id, filePaths: [...]);
+final record = helper.removeFiles(id, fileUrls: [...]);
+```
+
+## Other Utilities
+
+### BaseHelper
+
+A more flexible helper where `collection` and `mapper` are specified per method. Useful for dynamic or multi-collection use cases.
+
+### HelperUtils
+
+Contains static methods for building queries (mainly used internally, but also available).
+
+## License and Contributing
+
+MIT licensed. Contributions are welcome — feel free to open issues or submit PRs.
