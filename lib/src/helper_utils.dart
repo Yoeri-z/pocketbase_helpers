@@ -128,4 +128,9 @@ abstract final class HelperUtils {
     }
     return map;
   }
+
+  ///Gets the names of files from their urls, this is simply the last path segment
+  List<String> getNamesFromUrls(List<String> fileUrls) {
+    return fileUrls.map((f) => Uri.parse(f).pathSegments.last).toList();
+  }
 }

@@ -3,6 +3,7 @@
 - changed fileUrls to fileNames in the removeFiles methods
 - changed filePaths to files in the addFiles methods, the expected input is now a map with filenames as keys and filedata as values.
 This change was done to add support for web.
+- added buildExpansionString, mergeExpansions and getNamesFromUrls utilityMethods.
 
 
 ## 0.0.2
