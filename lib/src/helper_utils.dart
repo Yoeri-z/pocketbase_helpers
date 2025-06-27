@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketbase_helpers/src/models.dart';
+import 'package:pocketbase_helpers/pocketbase_helpers.dart';
+import 'package:pocketbase_helpers/src/io_only/export.dart' as io;
 
 ///This class contains static helper functions that do not rely on the pocketbase instance
 abstract final class HelperUtils {
@@ -132,5 +135,11 @@ abstract final class HelperUtils {
   ///Gets the names of files from their urls, this is simply the last path segment
   static List<String> getNamesFromUrls(List<String> fileUrls) {
     return fileUrls.map((f) => Uri.parse(f).pathSegments.last).toList();
+  }
+
+  ///Convert filepaths into a correctly formatted filemap that is required by the addFiles method
+  ///This method does not work for Web and WILL throw an error.
+  static Map<String, Uint8List> pathsToFiles(List<String> paths) {
+    return io.pathsToFiles(paths);
   }
 }
