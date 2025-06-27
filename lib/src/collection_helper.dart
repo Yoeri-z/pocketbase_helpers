@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 
@@ -209,13 +211,13 @@ class CollectionHelper<T extends PocketBaseRecord> {
   /// - the filepaths pointing to where the files are stored locally
   Future<T> addFiles(
     String id, {
-    required List<String> filePaths,
+    required Map<String, Uint8List> files,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.addFiles(
     collection,
     id: id,
-    filePaths: filePaths,
+    files: files,
     mapper: mapper,
     query: query,
     headers: headers,
@@ -226,13 +228,13 @@ class CollectionHelper<T extends PocketBaseRecord> {
   /// - the file urls pointing to where the files are stored on the pocketbase instance (they can also be just the filenames)
   Future<T> removeFiles(
     String id, {
-    required List<String> fileUrls,
+    required List<String> fileNames,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.removeFiles(
     collection,
     id: id,
-    fileUrls: fileUrls,
+    fileNames: fileNames,
     mapper: mapper,
     query: query,
     headers: headers,

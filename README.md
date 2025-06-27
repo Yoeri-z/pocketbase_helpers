@@ -66,28 +66,63 @@ You can use any serializer that converts a `Map<String, dynamic>` to your model.
 
 ```dart
 // paginated list fetch
-final paginatedList = helper.getList();
+final paginatedList = await helper.getList();
 
 // Fetch full list
-final list = helper.getFullList();
+final list = await helper.getFullList();
 
 // Search and sort-friendly paginated fetch
 // allows you to do keyword searches, see inline documentation for more information
-final paginatedList = helper.search(
+final paginatedList = await helper.search(
   params: params,
   searchableColumns: [...],
 );
 
 // CRUD operations
-final record = helper.getSingle(id);
-final record = helper.create(data: data);
-final record = helper.update(record);
-helper.delete(id);
+final record = await helper.getSingle(id);
+final record = await helper.create(data: data);
+final record = await helper.update(record);
+await helper.delete(id);
 
 // File utilities
 final uri = helper.getFileUri(id, filename);
-final record = helper.addFiles(id, filePaths: [...]);
-final record = helper.removeFiles(id, fileUrls: [...]);
+final record = await helper.addFiles(id, filePaths: [...]);
+final record = await helper.removeFiles(id, fileUrls: [...]);
+```
+
+### Merging expansions:
+Pocketbase allows you to expand foreign fields in your records,
+this package adds a utility to automatically remap these expansions to be put in your model classes:
+```dart
+class User implements PocketbaseRecord{
+  @override
+  final String id;
+  final String username;
+
+  // rest of your model code
+}
+
+class Post implements PocketBaseRecord {
+  @override
+  final String id;
+  final String userId;
+  final User user;
+
+  // rest of your model code
+}
+
+//setup a helper with some base expansions
+final helper = CollectionHelper(
+  pb //your pocketbase instance,
+  collection: 'posts',
+  mapper: MyRecord.fromMap,
+  baseExpansions: {
+    'user_id' : 'user'
+  },
+);
+
+//now all the methods with this helper will automatically include the user field
+final post = await 
 ```
 
 ## Other Utilities

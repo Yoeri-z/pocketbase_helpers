@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -252,54 +252,55 @@ class BaseHelper {
   Future<T> addFiles<T extends Object>(
     String collection, {
     required String id,
-    required List<String> filePaths,
+    required Map<String, Uint8List> files,
     required RecordMapper<T> mapper,
+    Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final files = [for (final filePath in filePaths) File(filePath)];
-
     final record = await pb
         .collection(collection)
         .update(
           id,
           files: [
-            for (final file in files)
-              MultipartFile.fromBytes(
-                'files+',
-                file.readAsBytesSync(),
-                filename: file.uri.pathSegments.last,
-              ),
+            for (final file in files.entries)
+              MultipartFile.fromBytes('files+', file.value, filename: file.key),
           ],
+          expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
-    return mapper(record.toJson().clean());
+    return mapper(
+      HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+    );
   }
 
   ///Remove files from a record, this takes:
   /// - The id of the record the files will belong too
-  /// - the file urls pointing to where the files are stored on the pocketbase instance (they can also be just the filenames)
+  /// - the names of the files to remove
   Future<T> removeFiles<T extends Object>(
     String collection, {
     required String id,
-    required List<String> fileUrls,
+    required List<String> fileNames,
     required RecordMapper<T> mapper,
+    Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final names = fileUrls.map((f) => Uri.parse(f).pathSegments.last).toList();
     final record = await pb
         .collection(collection)
         .update(
           id,
-          body: {'files-': names},
+          body: {'files-': fileNames},
+          expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
-    return mapper(record.toJson().clean());
+    return mapper(
+      HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+    );
   }
 }
 
