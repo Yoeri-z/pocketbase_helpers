@@ -8,8 +8,15 @@ import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 /// - collection: the collection this helper operates on
 /// - mapper: a function that converts `Map<String, dynamic>` to your model
 class CollectionHelper<T extends PocketBaseRecord> {
-  CollectionHelper(this.pb, {required this.collection, required this.mapper})
-    : _helper = BaseHelper(pb);
+  CollectionHelper(
+    this.pb, {
+    required this.collection,
+    required this.mapper,
+    this.baseExpansions,
+  }) : _helper = BaseHelper(pb);
+
+  ///The pocketbase instance
+  final PocketBase pb;
 
   ///The collection this collection helper operates on
   final String collection;
@@ -17,8 +24,47 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///The mapper that converts a json/map into one of your models
   final RecordMapper<T> mapper;
 
-  ///The pocketbase instance
-  final PocketBase pb;
+  ///The default expansions to be merged into this record
+  ///This is better explained with an example:
+  ///```
+  ///{
+  ///   "post": "WyAw4bDrvws6gGl",
+  ///   "user_id": "FtHAW9feB5rze7D",
+  ///   "message": "Example message...",
+  ///   "expand": {
+  ///       "user_id": {
+  ///           "name": "John Doe"
+  ///           "username": "users54126",
+  ///        }
+  ///    }
+  ///}
+  ///```
+  ///will get remapped into:
+  ///```
+  ///{
+  ///   "post": "WyAw4bDrvws6gGl",
+  ///   "user_id": "FtHAW9feB5rze7D",
+  ///   "user": {
+  ///        "name": "John Doe"
+  ///        "username": "users54126",
+  ///      }
+  ///   }
+  ///   "message": "Example message...",
+  ///}
+  ///```
+  ///when [baseExpansions] is:
+  ///```
+  ///{
+  ///   "user_id" : "user"
+  ///}
+  ///```
+  ///
+  ///So now you can put
+  ///```
+  ///final User user;
+  ///```
+  ///in your model class
+  final Map<String, String>? baseExpansions;
 
   final BaseHelper _helper;
 
@@ -36,6 +82,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     required List<String> searchableColumns,
     List<String>? otherFilters,
     Map<String, dynamic>? otherParams,
+    Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.search(
@@ -45,6 +92,8 @@ class CollectionHelper<T extends PocketBaseRecord> {
     mapper: mapper,
     otherFilters: otherFilters,
     otherParams: otherParams,
+    expansions:
+        (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
     query: query,
     headers: headers,
   );
@@ -57,6 +106,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     int perPage = 30,
     bool skipTotal = false,
     String? sort,
+    Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getList(
@@ -66,7 +116,9 @@ class CollectionHelper<T extends PocketBaseRecord> {
     params: params,
     page: page,
     perPage: perPage,
-    skipTotal: false,
+    skipTotal: skipTotal,
+    expansions:
+        (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
     sort: sort,
     query: query,
     headers: headers,
@@ -78,6 +130,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     String? expr,
     Map<String, dynamic>? params,
     String? sort,
+    Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getFullList(
@@ -86,6 +139,8 @@ class CollectionHelper<T extends PocketBaseRecord> {
     expr: expr,
     params: params,
     sort: sort,
+    expansions:
+        (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
     query: query,
     headers: headers,
   );
@@ -93,12 +148,15 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///Get a single record from a collection by its id
   Future<T> getSingle(
     String id, {
+    Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getSingle(
     collection,
     id: id,
     mapper: mapper,
+    expansions:
+        (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
     query: query,
     headers: headers,
   );
@@ -106,6 +164,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///Create a new record from the [data] argument
   Future<T> create({
     required Map<String, dynamic> data,
+    Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.create(
@@ -119,6 +178,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///Update the supplied record, effectively this syncs the record that is supplied the database
   Future<T> update(
     T record, {
+    Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.update(

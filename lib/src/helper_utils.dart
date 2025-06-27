@@ -77,4 +77,55 @@ abstract final class HelperUtils {
       (_, value) => (value is String && value.isEmpty) || value == const {},
     );
   }
+
+  static String? buildExpansionString(Map<String, String>? expansions) {
+    if (expansions == null || expansions.isEmpty) return null;
+    return expansions.keys.join(',');
+  }
+
+  ///Merges the expansion field directly into the map, renaming according to [expansions]
+  ///For example:
+  ///```
+  ///{
+  ///   "post": "WyAw4bDrvws6gGl",
+  ///   "user_id": "FtHAW9feB5rze7D",
+  ///   "message": "Example message...",
+  ///   "expand": {
+  ///       "user_id": {
+  ///           "name": "John Doe"
+  ///           "username": "users54126",
+  ///        }
+  ///    }
+  ///}
+  ///```
+  ///will get remapped into:
+  ///```
+  ///{
+  ///   "post": "WyAw4bDrvws6gGl",
+  ///   "user_id": "FtHAW9feB5rze7D",
+  ///   "user": {
+  ///        "name": "John Doe"
+  ///        "username": "users54126",
+  ///      }
+  ///   }
+  ///   "message": "Example message...",
+  ///}
+  ///```
+  ///when [expansions] is:
+  ///```
+  ///{
+  ///   "user_id" : "user"
+  ///}
+  ///```
+  static Map<String, dynamic> mergeExpansion(
+    Map<String, String>? expansions,
+    Map<String, dynamic> map,
+  ) {
+    if (expansions == null || !map.containsKey('expand')) return map;
+    final expandMap = map['expand'] as Map<String, dynamic>;
+    for (final entry in expansions.entries) {
+      map[entry.value] = expandMap[entry.key];
+    }
+    return map;
+  }
 }

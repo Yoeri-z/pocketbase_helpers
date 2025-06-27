@@ -34,6 +34,7 @@ class BaseHelper {
     required RecordMapper<T> mapper,
     List<String>? otherFilters,
     Map<String, dynamic>? otherParams,
+    Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
@@ -59,12 +60,19 @@ class BaseHelper {
           sort: HelperUtils.getSortOrderFor(params),
           page: params.page,
           perPage: params.perPage,
+          expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
     return TypedResultList(
-      result.items.map((record) => mapper(record.toJson().clean())).toList(),
+      result.items
+          .map(
+            (record) => mapper(
+              HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+            ),
+          )
+          .toList(),
       page: result.page,
       perPage: result.perPage,
       totalItems: result.totalItems,
@@ -82,37 +90,36 @@ class BaseHelper {
     int perPage = 30,
     bool skipTotal = false,
     String? sort,
+    Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    late final ResultList<RecordModel> result;
+    String? filter;
     if (expr != null) {
-      result = await pb
-          .collection(collection)
-          .getList(
-            page: page,
-            filter: pb.filter(expr, params ?? const {}),
-            perPage: perPage,
-            skipTotal: skipTotal,
-            sort: sort,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
-    } else {
-      result = await pb
-          .collection(collection)
-          .getList(
-            page: page,
-            perPage: perPage,
-            skipTotal: skipTotal,
-            sort: sort,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
+      filter = pb.filter(expr, params ?? const {});
     }
 
+    final result = await pb
+        .collection(collection)
+        .getList(
+          page: page,
+          filter: filter,
+          perPage: perPage,
+          skipTotal: skipTotal,
+          expand: HelperUtils.buildExpansionString(expansions),
+          sort: sort,
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
     return TypedResultList(
-      result.items.map((e) => mapper(e.toJson().clean())).toList(),
+      result.items
+          .map(
+            (record) => mapper(
+              HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+            ),
+          )
+          .toList(),
       page: result.page,
       perPage: perPage,
       totalItems: result.totalItems,
@@ -128,32 +135,32 @@ class BaseHelper {
     String? expr,
     Map<String, dynamic>? params,
     String? sort,
+    Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    late final List<RecordModel> result;
+    String? filter;
     if (expr != null) {
-      result = await pb
-          .collection(collection)
-          .getFullList(
-            batch: batch,
-            filter: pb.filter(expr, params ?? const {}),
-            sort: sort,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
-    } else {
-      result = await pb
-          .collection(collection)
-          .getFullList(
-            batch: batch,
-            sort: sort,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
+      filter = pb.filter(expr, params ?? const {});
     }
+    final result = await pb
+        .collection(collection)
+        .getFullList(
+          fields: filter,
+          batch: batch,
+          sort: sort,
+          expand: HelperUtils.buildExpansionString(expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
 
-    return result.map((e) => mapper(e.toJson().clean())).toList();
+    return result
+        .map(
+          (record) => mapper(
+            HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+          ),
+        )
+        .toList();
   }
 
   ///Get a single record from a collection by its id
@@ -161,6 +168,7 @@ class BaseHelper {
     String collection, {
     required String id,
     required RecordMapper<T> mapper,
+    Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
@@ -175,18 +183,22 @@ class BaseHelper {
     String collection, {
     required Map<String, dynamic> data,
     required RecordMapper<T> mapper,
+    Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .create(
           body: HelperUtils.creationHook(collection, pb, data),
+          expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
-    return mapper(result.toJson().clean());
+    return mapper(
+      HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+    );
   }
 
   ///Update the supplied record, effectively this syncs the record that is supplied the database
@@ -194,6 +206,7 @@ class BaseHelper {
     String collection, {
     required T record,
     required RecordMapper<T> mapper,
+    Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
@@ -202,11 +215,14 @@ class BaseHelper {
         .update(
           record.id,
           body: HelperUtils.updateHook(collection, pb, record.toMap()),
+          expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
-    return mapper(result.toJson().clean());
+    return mapper(
+      HelperUtils.mergeExpansion(expansions, result.toJson()).clean(),
+    );
   }
 
   ///Delete a record by its id
