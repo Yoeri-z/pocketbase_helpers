@@ -69,7 +69,7 @@ class BaseHelper {
       result.items
           .map(
             (record) => mapper(
-              HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+              HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
             ),
           )
           .toList(),
@@ -116,7 +116,7 @@ class BaseHelper {
       result.items
           .map(
             (record) => mapper(
-              HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+              HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
             ),
           )
           .toList(),
@@ -157,7 +157,7 @@ class BaseHelper {
     return result
         .map(
           (record) => mapper(
-            HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+            HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
           ),
         )
         .toList();
@@ -197,7 +197,7 @@ class BaseHelper {
         );
 
     return mapper(
-      HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
     );
   }
 
@@ -221,7 +221,7 @@ class BaseHelper {
         );
 
     return mapper(
-      HelperUtils.mergeExpansion(expansions, result.toJson()).clean(),
+      HelperUtils.mergeExpansions(expansions, result.toJson()).clean(),
     );
   }
 
@@ -272,7 +272,7 @@ class BaseHelper {
         );
 
     return mapper(
-      HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
     );
   }
 
@@ -299,7 +299,7 @@ class BaseHelper {
         );
 
     return mapper(
-      HelperUtils.mergeExpansion(expansions, record.toJson()).clean(),
+      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
     );
   }
 }

@@ -32,7 +32,7 @@ abstract final class HelperUtils {
   ///The function returns a string query and params that can be used to create a filter string using
   ///the filter function on your pocketbase instance:
   ///`pb.filter(query, params)`
-  static (String query, Map<String, dynamic> params) buildQuery(
+  static (String filter, Map<String, dynamic> params) buildQuery(
     ///the keywords to search for, will be comma seperated
     String query,
 
@@ -120,7 +120,7 @@ abstract final class HelperUtils {
   ///   "user_id" : "user"
   ///}
   ///```
-  static Map<String, dynamic> mergeExpansion(
+  static Map<String, dynamic> mergeExpansions(
     Map<String, String>? expansions,
     Map<String, dynamic> map,
   ) {

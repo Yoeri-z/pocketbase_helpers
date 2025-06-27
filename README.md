@@ -133,7 +133,50 @@ A more flexible helper where `collection` and `mapper` are specified per method.
 
 ### HelperUtils
 
-Contains static methods for building queries (mainly used internally, but also available).
+Contains a few usefull static methods (some are mainly used internally, but also available):
+```dart
+//Method to clean up maps received form the pocketbase package
+//removes certain empty values to make it work with dart nullsafety
+Map<String, dynamic> cleanMap(Map<String, dynamic> map)
+
+//Build pocketbase expand string from the pocketbase_helpers expansions format
+String? buildExpansionString(Map<String, String>? expansions);
+
+//merges the expand field in a map received from pocketbase into the field map
+//according to the specification in the expansions field
+//see inline documentation for more details and an example
+Map<String, dynamic> mergeExpansions(
+    Map<String, String>? expansions,
+    Map<String, dynamic> map,
+)
+
+//Gets the names of files from their urls, this is simply the last path segment
+List<String> getNamesFromUrls(List<String> fileUrls)
+//usefull together with the removefiles method like this:
+helper.removeFiles(id, fileNames: HelperUtils.getNamesFromUrls())
+
+///Convert filepaths into a correctly formatted filemap that is required by the addFiles method
+///This method does not work for Web and WILL throw an error.
+Map<String, Uint8List> pathsToFiles(List<String> paths)
+//usefull together with the addfiles method like this:
+helper.addFiles(id, files: HelperUtils.pathsToFiles(paths))
+
+//get a pocketbase supported sort string from search paramaters
+String? getSortOrderFor(SearchParams params)
+
+//build and advanced keyword search, returns a filter and params
+(String filter, Map<String, dynamic> params) buildQuery(
+    ///the keywords to search for, will be comma seperated
+    String query,
+    ///the fields on your collection to look for this keyword
+    List<String> fields, {
+    List<String>? otherFilters,
+    Map<String, dynamic>? otherParams,
+  })
+
+//can be put into a pocketbase filter
+final filter = pb.filter(filter, params)
+```
 
 Also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the json/map directly before it is sent to the server
 
