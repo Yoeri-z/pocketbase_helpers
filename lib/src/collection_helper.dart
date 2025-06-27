@@ -172,6 +172,8 @@ class CollectionHelper<T extends PocketBaseRecord> {
   }) => _helper.create(
     collection,
     data: data,
+    expansions:
+        (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
     mapper: mapper,
     query: query,
     headers: headers,
@@ -187,6 +189,8 @@ class CollectionHelper<T extends PocketBaseRecord> {
     collection,
     record: record,
     mapper: mapper,
+    expansions:
+        (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
     query: query,
     headers: headers,
   );
