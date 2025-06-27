@@ -1,3 +1,6 @@
+## 0.0.4
+- Fixed breaking bugs related to expansions when creating or updating a record
+
 ## 0.0.3
 - added expansion merge utilities
 - changed fileUrls to fileNames in the removeFiles methods

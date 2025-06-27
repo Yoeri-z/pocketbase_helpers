@@ -157,7 +157,7 @@ Map<String, dynamic> mergeExpansions(
 //Gets the names of files from their urls, this is simply the last path segment
 List<String> getNamesFromUrls(List<String> fileUrls)
 //usefull together with the removefiles method like this:
-helper.removeFiles(id, fileNames: HelperUtils.getNamesFromUrls())
+helper.removeFiles(id, fileNames: HelperUtils.getNamesFromUrls(fileUrls))
 
 ///Convert filepaths into a correctly formatted filemap that is required by the addFiles method
 ///This method does not work for Web and WILL throw an error.
