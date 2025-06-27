@@ -174,8 +174,15 @@ class BaseHelper {
   }) async {
     final result = await pb
         .collection(collection)
-        .getOne(id, query: query ?? const {}, headers: headers ?? const {});
-    return mapper(result.toJson().clean());
+        .getOne(
+          id,
+          expand: HelperUtils.buildExpansionString(expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+    return mapper(
+      HelperUtils.mergeExpansions(expansions, result.toJson()).clean(),
+    );
   }
 
   ///Create a new record from the `data` argument
