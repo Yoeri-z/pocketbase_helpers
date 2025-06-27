@@ -97,7 +97,7 @@ this package adds a utility to automatically remap these expansions to be put in
 class User implements PocketbaseRecord{
   @override
   final String id;
-  final String username;
+  final String name;
 
   // rest of your model code
 }
@@ -122,7 +122,11 @@ final helper = CollectionHelper(
 );
 
 //now all the methods with this helper will automatically include the user field
-final post = await 
+final post = await helper.getSingle(postId);
+print(post.user.name)
+
+
+//expansions also work with list values and nullable values
 ```
 
 ## Other Utilities
