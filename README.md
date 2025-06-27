@@ -86,8 +86,8 @@ await helper.delete(id);
 
 // File utilities
 final uri = helper.getFileUri(id, filename);
-final record = await helper.addFiles(id, filePaths: [...]);
-final record = await helper.removeFiles(id, fileUrls: [...]);
+final record = await helper.addFiles(id, files: [...]);
+final record = await helper.removeFiles(id, fileNames: [...]);
 ```
 
 ### Merging expansions:
