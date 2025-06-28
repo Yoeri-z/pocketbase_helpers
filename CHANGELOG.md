@@ -1,3 +1,6 @@
+## 0.0.5
+- Fixed breaking bug with filtering in fullList fetch
+
 ## 0.0.4
 - Fixed breaking bugs related to expansions when creating or updating a record
 

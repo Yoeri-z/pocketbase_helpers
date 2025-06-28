@@ -146,7 +146,7 @@ class BaseHelper {
     final result = await pb
         .collection(collection)
         .getFullList(
-          fields: filter,
+          filter: filter,
           batch: batch,
           sort: sort,
           expand: HelperUtils.buildExpansionString(expansions),
