@@ -185,6 +185,39 @@ class BaseHelper {
     );
   }
 
+  ///Get a single record from a collection by its id,
+  ///if it is not available this returns null
+  Future<T?> getMaybeSingle<T extends Object>(
+    String collection, {
+    required String id,
+    required RecordMapper<T> mapper,
+    Map<String, String>? expansions,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) async {
+    final result = await pb
+        .collection(collection)
+        .getList(
+          page: 1,
+          perPage: 1,
+          filter: pb.filter('id={:id}', {'id': id}),
+          expand: HelperUtils.buildExpansionString(expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    if (result.items.isEmpty) {
+      return null;
+    } else {
+      return mapper(
+        HelperUtils.mergeExpansions(
+          expansions,
+          result.items.first.toJson(),
+        ).clean(),
+      );
+    }
+  }
+
   ///Create a new record from the `data` argument
   Future<T> create<T extends Object>(
     String collection, {

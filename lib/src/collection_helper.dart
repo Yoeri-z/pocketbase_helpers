@@ -10,21 +10,29 @@ import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 /// - collection: the collection this helper operates on
 /// - mapper: a function that converts `Map<String, dynamic>` to your model
 class CollectionHelper<T extends PocketBaseRecord> {
+  ///A [CollectionHelper] is a class that helps you manage a specific collection.
+  ///To see what a [CollectionHelper] can do, take a look at its methods.
+  ///[CollectionHelper] expects the following arguments:
+  /// - pb: the pocketbase instance of your application
+  /// - collection: the collection this helper operates on
+  /// - mapper: a function that converts `Map<String, dynamic>` to your model
   CollectionHelper(
     this.pb, {
-    required this.collection,
-    required this.mapper,
+    required String collection,
+    required T Function(Map<String, dynamic>) mapper,
     this.baseExpansions,
-  }) : _helper = BaseHelper(pb);
+  }) : _mapper = mapper,
+       collectionName = collection,
+       _helper = BaseHelper(pb);
 
   ///The pocketbase instance
   final PocketBase pb;
 
   ///The collection this collection helper operates on
-  final String collection;
+  final String collectionName;
 
   ///The mapper that converts a json/map into one of your models
-  final RecordMapper<T> mapper;
+  final RecordMapper<T> _mapper;
 
   ///The default expansions to be merged into this record
   ///This is better explained with an example:
@@ -70,6 +78,10 @@ class CollectionHelper<T extends PocketBaseRecord> {
 
   final BaseHelper _helper;
 
+  ///This is the raw [RecordService] for the collection
+  ///(equal to pb.collection(collectionName))
+  RecordService get collection => pb.collection(collectionName);
+
   ///Execute a search on records based on requested table data.
   ///Takes [SearchParams] and fetches a [TypedResultList].
   ///Internally this method contructs and advanced filter, that keyword searches all the [searchableColumns]
@@ -88,10 +100,10 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.search(
-    collection,
+    collectionName,
     params: params,
     searchableColumns: searchableColumns,
-    mapper: mapper,
+    mapper: _mapper,
     otherFilters: otherFilters,
     otherParams: otherParams,
     expansions:
@@ -112,8 +124,8 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getList(
-    collection,
-    mapper: mapper,
+    collectionName,
+    mapper: _mapper,
     expr: expr,
     params: params,
     page: page,
@@ -136,8 +148,8 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getFullList(
-    collection,
-    mapper: mapper,
+    collectionName,
+    mapper: _mapper,
     expr: expr,
     params: params,
     sort: sort,
@@ -154,9 +166,26 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getSingle(
-    collection,
+    collectionName,
     id: id,
-    mapper: mapper,
+    mapper: _mapper,
+    expansions:
+        (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
+    query: query,
+    headers: headers,
+  );
+
+  ///Get a single record from a collection by its id,
+  ///returns null if it is not available
+  Future<T?> getMaybeSingle(
+    String id, {
+    Map<String, String>? additionalExpansions,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.getMaybeSingle(
+    collectionName,
+    id: id,
+    mapper: _mapper,
     expansions:
         (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
     query: query,
@@ -170,11 +199,11 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.create(
-    collection,
+    collectionName,
     data: data,
     expansions:
         (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
-    mapper: mapper,
+    mapper: _mapper,
     query: query,
     headers: headers,
   );
@@ -186,9 +215,9 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.update(
-    collection,
+    collectionName,
     record: record,
-    mapper: mapper,
+    mapper: _mapper,
     expansions:
         (baseExpansions ?? {})..addAll(additionalExpansions ?? const {}),
     query: query,
@@ -200,7 +229,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     String id, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.delete(collection, id: id, query: query, headers: headers);
+  }) => _helper.delete(collectionName, id: id, query: query, headers: headers);
 
   ///Get the absolute file url for a file, this function takes
   /// - record id
@@ -219,10 +248,10 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.addFiles(
-    collection,
+    collectionName,
     id: id,
     files: files,
-    mapper: mapper,
+    mapper: _mapper,
     query: query,
     headers: headers,
   );
@@ -236,10 +265,10 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.removeFiles(
-    collection,
+    collectionName,
     id: id,
     fileNames: fileNames,
-    mapper: mapper,
+    mapper: _mapper,
     query: query,
     headers: headers,
   );
