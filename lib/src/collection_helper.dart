@@ -169,13 +169,13 @@ class CollectionHelper<T extends PocketBaseRecord> {
   );
 
   ///Get a single record from a collection by its id
-  Future<T> getSingle(
+  Future<T> getOne(
     String id, {
     Map<String, String>? additionalExpansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.getSingle(
+  }) => _helper.getOne(
     collectionName,
     id: id,
     mapper: _mapper,
@@ -187,13 +187,13 @@ class CollectionHelper<T extends PocketBaseRecord> {
 
   ///Get a single record from a collection by its id,
   ///returns null if it is not available
-  Future<T?> getMaybeSingle(
+  Future<T?> getOneOrNull(
     String id, {
     Map<String, String>? additionalExpansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.getMaybeSingle(
+  }) => _helper.getOneOrNull(
     collectionName,
     id: id,
     mapper: _mapper,

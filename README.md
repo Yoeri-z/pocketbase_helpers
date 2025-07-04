@@ -97,9 +97,9 @@ final paginatedList = await helper.search(
   //same parameters as helper.getList()
 );
 
-// CRUD operations
-final record = await helper.getSingle(id);
-final maybeRecord = await helper.getMaybeSingle(id);
+// CRUD operations (here record is one of your serializable models)
+final record = await helper.getOne(id);
+final maybeRecord = await helper.getOneOrNull(id);
 final record = await helper.create(data: data);
 final record = await helper.update(record);
 await helper.delete(id);

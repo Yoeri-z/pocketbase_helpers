@@ -170,7 +170,7 @@ class BaseHelper {
   }
 
   ///Get a single record from a collection by its id
-  Future<T> getSingle<T extends Object>(
+  Future<T> getOne<T extends Object>(
     String collection, {
     required String id,
     required RecordMapper<T> mapper,
@@ -195,7 +195,7 @@ class BaseHelper {
 
   ///Get a single record from a collection by its id,
   ///if it is not available this returns null
-  Future<T?> getMaybeSingle<T extends Object>(
+  Future<T?> getOneOrNull<T extends Object>(
     String collection, {
     required String id,
     required RecordMapper<T> mapper,

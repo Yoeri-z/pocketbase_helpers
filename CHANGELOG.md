@@ -1,3 +1,7 @@
+## 0.0.7
+- Renamed `getSingle` to `getOne` and `getMaybeSingle` to `getOneOrNull`, this should be more in line
+with general naming conventions
+
 ## 0.0.6
 - Renamed `baseExpansions` to just `expansions` on the `CollectionHelper` class
 - Added a getter for the raw `RecordService` object to `CollectionHelper`
