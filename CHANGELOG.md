@@ -1,4 +1,4 @@
-## 0.0.5
+## 0.0.6
 - Renamed `baseExpansions` to just `expansions` on the `CollectionHelper` class
 - Added a getter for the raw `RecordService` object to `CollectionHelper`
 - added a new getMaybeSingle() method to `CollectionHelper` and `BaseHelper`
@@ -12,6 +12,9 @@ if not given all fields are returned
 - added queryParameters optionalfields to the getFileUrl method
 - renamed `creationHook` and `updateHook` to `preCreationHook` and `preUpdateHook`
 - updated readme and inline docs
+
+## 0.0.5
+- Fixed breaking bug with filtering in fullList fetch
 
 ## 0.0.4
 - Fixed breaking bugs related to expansions when creating or updating a record

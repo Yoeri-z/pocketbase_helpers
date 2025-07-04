@@ -136,7 +136,7 @@ final helper = CollectionHelper(
   pb //your pocketbase instance,
   collection: 'posts',
   mapper: MyRecord.fromMap,
-  baseExpansions: {
+  expansions: {
     'user_id' : 'user'
   },
 );
