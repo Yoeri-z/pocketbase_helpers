@@ -20,7 +20,7 @@ void main() {
       pb,
       collection: 'dummy',
       mapper: DummyRecord.fromMap,
-      baseExpansions: DummyRecord.expansions,
+      expansions: DummyRecord.expansions,
     );
   });
 

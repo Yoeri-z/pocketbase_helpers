@@ -4,7 +4,7 @@ A package to make working with PocketBase easier when using serializable models 
 
 ## Motivation
 
-PocketBase is a great backend for Flutter — lightweight, easy to use, and highly extendable. However, the base [`pocketbase`](https://pub.dev/packages/pocketbase) package does not provide utilities for strongly typed data, which is one of Dart’s main strengths over JavaScript.
+PocketBase is a great backend for Flutter — lightweight, easy to use, and highly extendable. However, the base [`pocketbase`](https://pub.dev/packages/pocketbase) package does not provide a lot of utilities for strongly typed data, which is one of Dart’s main strengths over JavaScript.
 
 This package simplifies working with typed data and handles PocketBase's quirks (like empty strings instead of `null`) more gracefully.
 
@@ -66,26 +66,46 @@ You can use any serializer that converts a `Map<String, dynamic>` to your model.
 
 ```dart
 // paginated list fetch
-final paginatedList = await helper.getList();
+final paginatedList = await helper.getList(
+  //expr fields take a pocketbase expression
+  expr: 'status = {:status}',
+
+  //params can be optionally supplied to escape values
+  params: {'status' : 'open'}
+
+  //a regular pocketbase sort string
+  sort: 'title,-status'
+
+  //optionally limit the number of fields that is included in the result
+  //if left empty all fields are returned
+  fields: ['id', 'title', 'status']
+  //also has header and query fields to add those to your request
+  headers: {}
+  query: {}
+);
 
 // Fetch full list
-final list = await helper.getFullList();
+final list = await helper.getFullList(
+  //same parameters as helper.getList()
+);
 
-// Search and sort-friendly paginated fetch
-// allows you to do keyword searches, see inline documentation for more information
+// Keyword Search paginated fetch
+// takes a string query and a list of fields that may be searched
 final paginatedList = await helper.search(
-  params: params,
-  searchableColumns: [...],
+  searchQuery: query,
+  searchableFields: [...],
+  //same parameters as helper.getList()
 );
 
 // CRUD operations
 final record = await helper.getSingle(id);
+final maybeRecord = await helper.getMaybeSingle(id);
 final record = await helper.create(data: data);
 final record = await helper.update(record);
 await helper.delete(id);
 
 // File utilities
-final uri = helper.getFileUri(id, filename);
+final uri = helper.getFileUrl(id, filename);
 final record = await helper.addFiles(id, files: [...]);
 final record = await helper.removeFiles(id, fileNames: [...]);
 ```
@@ -126,7 +146,12 @@ final post = await helper.getSingle(postId);
 print(post.user.name)
 
 
-//expansions also work with list values and nullable values
+//to include more expansions on a per method basis use the [additionalExpansions] field:
+final post = await helper.getSingle(postId, additionalExpansions: {
+  'category_id' : 'category'
+});
+print(post.user.name)
+print(post.category.title)
 ```
 
 ## Other Utilities
@@ -137,56 +162,45 @@ A more flexible helper where `collection` and `mapper` are specified per method.
 
 ### HelperUtils
 
-Contains a few usefull static methods (some are mainly used internally, but also available):
+Contains a few usefull static methods (but also available):
 ```dart
 //Method to clean up maps received form the pocketbase package
-//removes certain empty values to make it work with dart nullsafety
-Map<String, dynamic> cleanMap(Map<String, dynamic> map)
-
-//Build pocketbase expand string from the pocketbase_helpers expansions format
-String? buildExpansionString(Map<String, String>? expansions);
-
-//merges the expand field in a map received from pocketbase into the field map
-//according to the specification in the expansions field
-//see inline documentation for more details and an example
-Map<String, dynamic> mergeExpansions(
-    Map<String, String>? expansions,
-    Map<String, dynamic> map,
-)
+//removes empty string values to make it work with dart nullsafety
+final map = HelperUtils.cleanMap(map)
 
 //Gets the names of files from their urls, this is simply the last path segment
-List<String> getNamesFromUrls(List<String> fileUrls)
-//usefull together with the removefiles method like this:
-helper.removeFiles(id, fileNames: HelperUtils.getNamesFromUrls(fileUrls))
+final names = HelperUtils.getNamesFromUrls(fileUrls)
+//usefull together with the removefiles method:
+helper.removeFiles(id, fileNames: names)
 
-///Convert filepaths into a correctly formatted filemap that is required by the addFiles method
+///Convert local filepaths into a correctly formatted filemap that is required by the addFiles method
 ///This method does not work for Web and WILL throw an error.
-Map<String, Uint8List> pathsToFiles(List<String> paths)
-//usefull together with the addfiles method like this:
-helper.addFiles(id, files: HelperUtils.pathsToFiles(paths))
+final files = HelperUtils.pathsToFiles(paths)
+//usefull together with the addfiles method:
+helper.addFiles(id, files: files)
 
-//get a pocketbase supported sort string from search paramaters
-String? getSortOrderFor(SearchParams params)
+//builds a sort string for a single field
+final sort = HelperUtils.buildSortString(field, ascending)
 
-//build and advanced keyword search, returns a filter and params
-(String filter, Map<String, dynamic> params) buildQuery(
+//build an advanced keyword search, returns an expressions and escaped parameters
+(String expr, Map<String, dynamic> params) buildQuery(
     ///the keywords to search for, will be comma seperated
     String query,
     ///the fields on your collection to look for this keyword
-    List<String> fields, {
+    List<String> searchableFields, {
     List<String>? otherFilters,
     Map<String, dynamic>? otherParams,
   })
 
-//can be put into a pocketbase filter
-final filter = pb.filter(filter, params)
+//can be put into a pocketbase filter:
+final filter = pb.filter(expr, params)
 ```
 
 Also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the json/map directly before it is sent to the server
 
 ```dart
 void registerHooks() {
-  HelperUtils.creationHook = (collection, pb, map) {
+  HelperUtils.preCreationHook = (collection, pb, map) {
     if (pb.authStore.isValid) {
       //store the creator of every record
       map['creator_id'] = pb.authStore.record?.id;
@@ -194,7 +208,7 @@ void registerHooks() {
     return map;
   };
 
-  HelperUtils.updateHook = (collection, pb, map) {
+  HelperUtils.preUpdateHook = (collection, pb, map) {
     print('updated something');
     return map;
   };

@@ -1,54 +1,3 @@
-///Search paramaters to be used when running search queries
-///This class bundles all common parameters for more advanced list queries
-///the [query] fields is a string query which is used to keyword search a collection.
-///This query can also be comma seperated.
-///
-///For example, if query="alice, writer", it will return all records that contain the words alice and writer.
-class SearchParams {
-  const SearchParams({
-    this.query,
-    this.sortColumn,
-    this.ascending = false,
-    this.page = 1,
-    this.perPage = 30,
-  });
-
-  ///a string query which is used to keyword search a collection.
-  ///For example, if query="alice, writer", it will return all records that contain the words alice and writer.
-  final String? query;
-
-  ///The column that the result may be sorted on
-  ///if you want more custom sort orders, use the [helper.getList] method and [HelperUtils.buildQuery] method to
-  ///contruct your own search function
-  final String? sortColumn;
-
-  ///Wether or not the result should be sorted ascending or descending
-  final bool ascending;
-
-  ///The page to be returned
-  final int page;
-
-  ///The amount of records per page
-  final int perPage;
-
-  ///Copy the current searchparams with new values if supplied
-  SearchParams copyWith({
-    String? query,
-    String? sortColumn,
-    bool? ascending,
-    int? page,
-    int? perPage,
-  }) {
-    return SearchParams(
-      query: query ?? this.query,
-      sortColumn: sortColumn ?? this.sortColumn,
-      ascending: ascending ?? this.ascending,
-      page: page ?? this.page,
-      perPage: perPage ?? this.perPage,
-    );
-  }
-}
-
 ///A typed version of pocketbases [ResultList]
 class TypedResultList<T> {
   const TypedResultList(
@@ -59,9 +8,18 @@ class TypedResultList<T> {
     required this.totalPages,
   });
 
+  ///The items retured by this request
   final List<T> items;
+
+  ///The amount of items per page, if the page is full this is equal to `items.length`
   final int perPage;
+
+  ///The page that this request is from
   final int page;
+
+  ///The total amount of items in the collection
   final int totalItems;
+
+  ///The total amount of pages in the collection
   final int totalPages;
 }

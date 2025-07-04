@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 import 'package:pocketbase_helpers/src/io_only/export.dart' as io;
 
 ///This class contains static helper functions that do not rely on the pocketbase instance
@@ -12,7 +11,7 @@ abstract final class HelperUtils {
     PocketBase pb,
     Map<String, dynamic> map,
   )
-  creationHook = (_, _, map) => map;
+  preCreationHook = (_, _, map) => map;
 
   ///Register hook to modify the json that gets sent to the pocketbase server instance on updates
   static Map<String, dynamic> Function(
@@ -20,7 +19,7 @@ abstract final class HelperUtils {
     PocketBase pb,
     Map<String, dynamic> map,
   )
-  updateHook = (_, _, map) => map;
+  preUpdateHook = (_, _, map) => map;
 
   ///Compose an advanced query string with paramaters, to do keyword searching on a collection
   ///This function takes the following fields:
@@ -32,12 +31,12 @@ abstract final class HelperUtils {
   ///The function returns a string query and params that can be used to create a filter string using
   ///the filter function on your pocketbase instance:
   ///`pb.filter(query, params)`
-  static (String filter, Map<String, dynamic> params) buildQuery(
+  static (String expr, Map<String, dynamic> params) buildQuery(
     ///the keywords to search for, will be comma seperated
     String query,
 
     ///the fields on your collection to look for this keyword
-    List<String> fields, {
+    List<String> searchableFields, {
     List<String>? otherFilters,
     Map<String, dynamic>? otherParams,
   }) {
@@ -49,7 +48,7 @@ abstract final class HelperUtils {
       final index = termMap.length;
       termMap['param$index'] = term;
       var subConditions = <String>[];
-      for (final field in fields) {
+      for (final field in searchableFields) {
         subConditions.add('$field ~ {:param$index}');
       }
       conditions.add('(${subConditions.join(' || ')})');
@@ -66,19 +65,18 @@ abstract final class HelperUtils {
     return (conditions.join(' && '), termMap);
   }
 
-  ///Get a sort order appropiately formatted to be put into the `sort` field on pocketbase queries
-  static String? getSortOrderFor(SearchParams params) {
-    return params.sortColumn != null
-        ? '${params.ascending ? '+' : '-'}${params.sortColumn}'
-        : null;
-  }
-
-  ///Pocketbase does not return null values, but most dart serializable packages do support null values.
-  ///This method cleans up a map, making all empty values null
+  ///Pocketbase does returns strings instead of null for fields like:
+  /// - Text
+  /// - Email
+  /// - Url
+  /// - DateField
+  /// - SelectField if it does not allow multiple selections
+  /// - relationfield if it does not allow multiple relations
+  ///, most dart serializable packages do support null values
+  ///and will even break if you give an empty string for a datetime for example.
+  ///This method cleans up a map, making all empty strings null
   static Map<String, dynamic> cleanMap(Map<String, dynamic> map) {
-    return map..removeWhere(
-      (_, value) => (value is String && value.isEmpty) || value == const {},
-    );
+    return map..removeWhere((_, value) => (value is String && value.isEmpty));
   }
 
   static String? buildExpansionString(Map<String, String>? expansions) {
@@ -141,5 +139,10 @@ abstract final class HelperUtils {
   ///This method does not work for Web and WILL throw an error.
   static Map<String, Uint8List> pathsToFiles(List<String> paths) {
     return io.pathsToFiles(paths);
+  }
+
+  ///Build a sort string from a given field and ascending boolean property
+  static String? buildSortString({String? sortField, bool ascending = true}) {
+    return sortField != null ? '${ascending ? '+' : '-'}$sortField' : null;
   }
 }
