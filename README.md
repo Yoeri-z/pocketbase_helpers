@@ -166,34 +166,34 @@ Contains a few usefull static methods (but also available):
 ```dart
 //Method to clean up maps received form the pocketbase package
 //removes empty string values to make it work with dart nullsafety
-final map = HelperUtils.cleanMap(map)
+final map = HelperUtils.cleanMap(map);
 
 //Gets the names of files from their urls, this is simply the last path segment
-final names = HelperUtils.getNamesFromUrls(fileUrls)
+final names = HelperUtils.getNamesFromUrls(fileUrls);
 //usefull together with the removefiles method:
-helper.removeFiles(id, fileNames: names)
+helper.removeFiles(id, fileNames: names);
 
 ///Convert local filepaths into a correctly formatted filemap that is required by the addFiles method
 ///This method does not work for Web and WILL throw an error.
-final files = HelperUtils.pathsToFiles(paths)
+final files = HelperUtils.pathsToFiles(paths);
 //usefull together with the addfiles method:
-helper.addFiles(id, files: files)
+helper.addFiles(id, files: files);
 
 //builds a sort string for a single field
-final sort = HelperUtils.buildSortString(field, ascending)
+final sort = HelperUtils.buildSortString(field, ascending);
 
 //build an advanced keyword search, returns an expressions and escaped parameters
-(String expr, Map<String, dynamic> params) buildQuery(
+final (expr, params) = HelperUtils.buildQuery(
     ///the keywords to search for, will be comma seperated
     String query,
     ///the fields on your collection to look for this keyword
     List<String> searchableFields, {
     List<String>? otherFilters,
     Map<String, dynamic>? otherParams,
-  })
+  });
 
 //can be put into a pocketbase filter:
-final filter = pb.filter(expr, params)
+final filter = pb.filter(expr, params);
 ```
 
 Also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the json/map directly before it is sent to the server
