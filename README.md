@@ -218,3 +218,4 @@ void registerHooks() {
 ## License and Contributing
 
 MIT licensed. Contributions are welcome — feel free to open issues or submit PRs.
+This package is in very early development fase, use at your own risk. 
