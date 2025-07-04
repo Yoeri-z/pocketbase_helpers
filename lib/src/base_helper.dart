@@ -284,12 +284,18 @@ class BaseHelper {
   Future<void> delete(
     String collection, {
     required String id,
+    Map<String, dynamic>? body,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
     final _ = await pb
         .collection(collection)
-        .delete(id, query: query ?? const {}, headers: headers ?? const {});
+        .delete(
+          id,
+          body: body ?? const {},
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
   }
 
   ///Get the absolute file url for a file, this function takes

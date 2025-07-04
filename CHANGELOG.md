@@ -1,3 +1,6 @@
+## 0.0.8
+- fixed mistake in readme
+- added `body` field to the `delete` methods
 ## 0.0.7
 - Renamed `getSingle` to `getOne` and `getMaybeSingle` to `getOneOrNull`, this should be more in line
 with general naming conventions

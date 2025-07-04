@@ -1,6 +1,6 @@
 name: pocketbase_helpers
 description: Utilities for using typed data together with pocketbase.
-version: 0.0.7
+version: 0.0.8
 repository: https://github.com/Yoeri-z/pocketbase_helpers
 
 environment:

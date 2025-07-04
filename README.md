@@ -142,12 +142,12 @@ final helper = CollectionHelper(
 );
 
 //now all the methods with this helper will automatically include the user field
-final post = await helper.getSingle(postId);
+final post = await helper.getOne(postId);
 print(post.user.name)
 
 
 //to include more expansions on a per method basis use the [additionalExpansions] field:
-final post = await helper.getSingle(postId, additionalExpansions: {
+final post = await helper.getOne(postId, additionalExpansions: {
   'category_id' : 'category'
 });
 print(post.user.name)

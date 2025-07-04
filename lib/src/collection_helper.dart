@@ -240,9 +240,16 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///Delete a record by its id
   Future<void> delete(
     String id, {
+    Map<String, dynamic>? body,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => _helper.delete(collectionName, id: id, query: query, headers: headers);
+  }) => _helper.delete(
+    collectionName,
+    id: id,
+    body: body,
+    query: query,
+    headers: headers,
+  );
 
   ///Get the absolute file url for a file, this function takes
   /// - record id
