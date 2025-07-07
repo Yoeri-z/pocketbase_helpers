@@ -11,11 +11,11 @@ abstract interface class PocketBaseRecord {
 
   ///A mapper method mapping this object to a map
   ///if your model has a [toJson] method instead, you can implement toMap like this:
-  ///
-  ///This naming was chosen because the method converts the object into a dart map, so it is more correct.
   ///```
   ///@override
   ///Map<String, dynamic> toMap() => toJson();
   ///```
+  ///
+  ///This naming was chosen because the method converts the object into a dart map, so it is more correct.
   Map<String, dynamic> toMap();
 }

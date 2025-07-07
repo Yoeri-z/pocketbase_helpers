@@ -29,37 +29,39 @@ class BaseHelper {
   ///Also works nice with flutters paginated table.
   Future<TypedResultList<T>> search<T extends Object>(
     String collection, {
-    required SearchParams params,
-    required List<String> searchableColumns,
+    required String searchQuery,
+    required List<String> searchableFields,
     required RecordMapper<T> mapper,
-    List<String>? otherFilters,
-    Map<String, dynamic>? otherParams,
+    int page = 1,
+    int perPage = 30,
+    String? sort,
+    List<String>? additionalExpressions,
+    Map<String, dynamic>? additionalParams,
+    List<String>? fields,
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    String? filter;
-    if (params.query != null || otherFilters != null) {
-      final (
-        String template,
-        Map<String, dynamic> values,
-      ) = HelperUtils.buildQuery(
-        params.query ?? '',
-        searchableColumns,
-        otherFilters: otherFilters,
-        otherParams: otherParams,
-      );
+    final (
+      String template,
+      Map<String, dynamic> values,
+    ) = HelperUtils.buildQuery(
+      searchQuery,
+      searchableFields,
+      otherFilters: additionalExpressions,
+      otherParams: additionalParams,
+    );
 
-      filter = pb.filter(template, values);
-    }
+    final filter = pb.filter(template, values);
 
     final result = await pb
         .collection(collection)
         .getList(
           filter: filter,
-          sort: HelperUtils.getSortOrderFor(params),
-          page: params.page,
-          perPage: params.perPage,
+          sort: sort,
+          page: page,
+          perPage: perPage,
+          fields: fields?.join(','),
           expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
@@ -90,6 +92,7 @@ class BaseHelper {
     int perPage = 30,
     bool skipTotal = false,
     String? sort,
+    List<String>? fields,
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
@@ -108,6 +111,7 @@ class BaseHelper {
           skipTotal: skipTotal,
           expand: HelperUtils.buildExpansionString(expansions),
           sort: sort,
+          fields: fields?.join(','),
           query: query ?? const {},
           headers: headers ?? const {},
         );
@@ -135,6 +139,7 @@ class BaseHelper {
     String? expr,
     Map<String, dynamic>? params,
     String? sort,
+    List<String>? fields,
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
@@ -149,6 +154,7 @@ class BaseHelper {
           filter: filter,
           batch: batch,
           sort: sort,
+          fields: fields?.join(','),
           expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
@@ -164,10 +170,11 @@ class BaseHelper {
   }
 
   ///Get a single record from a collection by its id
-  Future<T> getSingle<T extends Object>(
+  Future<T> getOne<T extends Object>(
     String collection, {
     required String id,
     required RecordMapper<T> mapper,
+    List<String>? fields,
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
@@ -177,6 +184,7 @@ class BaseHelper {
         .getOne(
           id,
           expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
           query: query ?? const {},
           headers: headers ?? const {},
         );
@@ -185,20 +193,58 @@ class BaseHelper {
     );
   }
 
+  ///Get a single record from a collection by its id,
+  ///if it is not available this returns null
+  Future<T?> getOneOrNull<T extends Object>(
+    String collection, {
+    required String id,
+    required RecordMapper<T> mapper,
+    List<String>? fields,
+    Map<String, String>? expansions,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) async {
+    final result = await pb
+        .collection(collection)
+        .getList(
+          page: 1,
+          perPage: 1,
+          filter: pb.filter('id={:id}', {'id': id}),
+          fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    if (result.items.isEmpty) {
+      return null;
+    } else {
+      return mapper(
+        HelperUtils.mergeExpansions(
+          expansions,
+          result.items.first.toJson(),
+        ).clean(),
+      );
+    }
+  }
+
   ///Create a new record from the `data` argument
   Future<T> create<T extends Object>(
     String collection, {
     required Map<String, dynamic> data,
     required RecordMapper<T> mapper,
+
     Map<String, String>? expansions,
+    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
     final record = await pb
         .collection(collection)
         .create(
-          body: HelperUtils.creationHook(collection, pb, data),
+          body: HelperUtils.preCreationHook(collection, pb, data),
           expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
           query: query ?? const {},
           headers: headers ?? const {},
         );
@@ -214,6 +260,7 @@ class BaseHelper {
     required T record,
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
+    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
@@ -221,8 +268,9 @@ class BaseHelper {
         .collection(collection)
         .update(
           record.id,
-          body: HelperUtils.updateHook(collection, pb, record.toMap()),
+          body: HelperUtils.preUpdateHook(collection, pb, record.toMap()),
           expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
           query: query ?? const {},
           headers: headers ?? const {},
         );
@@ -236,12 +284,18 @@ class BaseHelper {
   Future<void> delete(
     String collection, {
     required String id,
+    Map<String, dynamic>? body,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
     final _ = await pb
         .collection(collection)
-        .delete(id, query: query ?? const {}, headers: headers ?? const {});
+        .delete(
+          id,
+          body: body ?? const {},
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
   }
 
   ///Get the absolute file url for a file, this function takes
@@ -262,6 +316,7 @@ class BaseHelper {
     required Map<String, Uint8List> files,
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
+    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
@@ -273,6 +328,7 @@ class BaseHelper {
             for (final file in files.entries)
               MultipartFile.fromBytes('files+', file.value, filename: file.key),
           ],
+          fields: fields?.join(','),
           expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
@@ -292,6 +348,7 @@ class BaseHelper {
     required List<String> fileNames,
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
+    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
@@ -301,6 +358,7 @@ class BaseHelper {
           id,
           body: {'files-': fileNames},
           expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
           query: query ?? const {},
           headers: headers ?? const {},
         );

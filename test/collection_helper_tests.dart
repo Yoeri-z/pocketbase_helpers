@@ -20,7 +20,7 @@ void main() {
       pb,
       collection: 'dummy',
       mapper: DummyRecord.fromMap,
-      baseExpansions: DummyRecord.expansions,
+      expansions: DummyRecord.expansions,
     );
   });
 
@@ -72,7 +72,7 @@ void main() {
       ),
     ).thenAnswer((invocation) async => fakeRecord);
 
-    final result = await helper.getSingle(actual.id);
+    final result = await helper.getOne(actual.id);
 
     expect(result.equals(actual), isTrue);
   });
