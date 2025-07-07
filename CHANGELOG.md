@@ -1,3 +1,6 @@
+## 0.0.9
+- fixed breaking bug in getFileUrl method of collection helper
+
 ## 0.0.8
 - fixed mistake in readme
 - added `body` field to the `delete` methods

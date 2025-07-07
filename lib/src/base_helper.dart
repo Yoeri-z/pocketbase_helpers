@@ -303,7 +303,7 @@ class BaseHelper {
   /// - record id
   /// - filename
   /// and returns a correct Uri that can be used to retrieve it form the database
-  Uri getFileUri(String collection, String id, String filename) {
+  Uri getFileUrl(String collection, String id, String filename) {
     return pb.buildURL('api/files/$collection/$id/$filename');
   }
 

@@ -261,7 +261,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, dynamic>? queryParameters,
   }) {
     return pb.buildURL(
-      'api/files/$collection/$id/$filename',
+      'api/files/$collectionName/$id/$filename',
       queryParameters ?? {},
     );
   }
