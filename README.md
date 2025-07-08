@@ -158,7 +158,7 @@ print(post.category.title)
 
 ### BaseHelper
 
-A more flexible helper where `collection` and `mapper` are specified per method. Useful for dynamic or multi-collection use cases.
+A more flexible helper where `collection` and `mapper` are specified per method. Useful in multi-collection use cases.
 
 ### HelperUtils
 
@@ -218,4 +218,4 @@ void registerHooks() {
 ## License and Contributing
 
 MIT licensed. Contributions are welcome — feel free to open issues or submit PRs.
-This package is in very early development fase, use at your own risk. 
+This package is in very early development phase, use at your own risk. 

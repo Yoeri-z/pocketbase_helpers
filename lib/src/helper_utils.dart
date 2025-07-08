@@ -76,7 +76,13 @@ abstract final class HelperUtils {
   ///and will even break if you give an empty string for a datetime for example.
   ///This method cleans up a map, making all empty strings null
   static Map<String, dynamic> cleanMap(Map<String, dynamic> map) {
-    return map..removeWhere((_, value) => (value is String && value.isEmpty));
+    return map..removeWhere((key, value) {
+      if (value is Map<String, dynamic>) {
+        map[key] = cleanMap(value);
+        return false;
+      }
+      return (value is String && value.isEmpty);
+    });
   }
 
   static String? buildExpansionString(Map<String, String>? expansions) {

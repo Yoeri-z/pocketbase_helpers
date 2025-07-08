@@ -1,3 +1,6 @@
+## 0.0.10
+- made clean map work recursively on maps inside other maps
+
 ## 0.0.9
 - fixed breaking bug in getFileUrl method of collection helper
 
