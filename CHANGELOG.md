@@ -1,3 +1,9 @@
+## 0.0.11
+- added `count` method to the `CollectionHelper` and `BaseHelper`
+- add `getNameFromFileUrl` to `HelperUtils`
+- changed the search method to take a list of keywords instead of a string
+where the words are seperated by commas. This gives more flexibility
+
 ## 0.0.10
 - made clean map work recursively on maps inside other maps
 

@@ -66,7 +66,7 @@ You can use any serializer that converts a `Map<String, dynamic>` to your model.
 
 ```dart
 // paginated list fetch
-final paginatedList = await helper.getList(
+TypedResultList<MyRecord> paginatedList = await helper.getList(
   //expr fields take a pocketbase expression
   expr: 'status = {:status}',
 
@@ -85,29 +85,38 @@ final paginatedList = await helper.getList(
 );
 
 // Fetch full list
-final list = await helper.getFullList(
+List<MyRecord> list = await helper.getFullList(
   //same parameters as helper.getList()
 );
 
 // Keyword Search paginated fetch
-// takes a string query and a list of fields that may be searched
-final paginatedList = await helper.search(
-  searchQuery: query,
+// takes a list of keywords that will be matched in the supplied searchable fields
+TypedResultList<MyRecord> result = await helper.search(
+  keywords: [...],
   searchableFields: [...],
   //same parameters as helper.getList()
 );
 
 // CRUD operations (here record is one of your serializable models)
-final record = await helper.getOne(id);
-final maybeRecord = await helper.getOneOrNull(id);
-final record = await helper.create(data: data);
-final record = await helper.update(record);
+MyRecord record = await helper.getOne(id);
+MyRecord record = await helper.create(data: data);
+MyRecord record = await helper.update(record);
 await helper.delete(id);
 
+
 // File utilities
-final uri = helper.getFileUrl(id, filename);
-final record = await helper.addFiles(id, files: [...]);
-final record = await helper.removeFiles(id, fileNames: [...]);
+Uri uri = helper.getFileUrl(id, filename);
+MyRecord record = await helper.addFiles(id, files: [...]);
+MyRecord record = await helper.removeFiles(id, fileNames: [...]);
+
+// Miscellaneous operations
+MyRecord maybeRecord = await helper.getOneOrNull(id);
+int count = await helper.count(
+  //expr fields take a pocketbase expression
+  expr: 'status = {:status}',
+  //params can be optionally supplied to escape values
+  params: {'status' : 'open'}
+);
 ```
 
 ### Merging expansions:
@@ -185,12 +194,10 @@ final sort = HelperUtils.buildSortString(field, ascending);
 //build an advanced keyword search, returns an expressions and escaped parameters
 final (expr, params) = HelperUtils.buildQuery(
     ///the keywords to search for, will be comma seperated
-    String query,
+    [...],
     ///the fields on your collection to look for this keyword
-    List<String> searchableFields, {
-    List<String>? otherFilters,
-    Map<String, dynamic>? otherParams,
-  });
+    [...],
+);
 
 //can be put into a pocketbase filter:
 final filter = pb.filter(expr, params);

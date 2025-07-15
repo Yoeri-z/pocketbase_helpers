@@ -92,7 +92,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///
   ///This method was designed with tables in mind and is especially to make ui tables with searchbars
   Future<TypedResultList<T>> search({
-    required String searchQuery,
+    required List<String> keywords,
     required List<String> searchableFields,
     int page = 1,
     int perPage = 30,
@@ -105,7 +105,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, String>? headers,
   }) => _helper.search(
     collectionName,
-    searchQuery: searchQuery,
+    keywords: keywords,
     searchableFields: searchableFields,
     page: page,
     sort: sort,
@@ -199,6 +199,21 @@ class CollectionHelper<T extends PocketBaseRecord> {
     mapper: _mapper,
     expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
     fields: fields,
+    query: query,
+    headers: headers,
+  );
+
+  ///Get the count of records that match the provided expression.
+  ///If no expression is provided this will return the amount of records in the collection
+  Future<int> count({
+    String? expr,
+    Map<String, dynamic>? params,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.count(
+    collectionName,
+    expr: expr,
+    params: params,
     query: query,
     headers: headers,
   );

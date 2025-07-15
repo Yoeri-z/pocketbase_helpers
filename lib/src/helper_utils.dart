@@ -23,7 +23,7 @@ abstract final class HelperUtils {
 
   ///Compose an advanced query string with paramaters, to do keyword searching on a collection
   ///This function takes the following fields:
-  /// - query: the keywords to search for, will be comma seperated
+  /// - keywords: the keywords to search for
   /// - fields: the fields on your collection to look for this keyword
   /// - otherFilters: other filters that you want to apply alongside the keyword search
   /// - otherParams: params that are needed by otherFilters if you supplied it
@@ -32,19 +32,18 @@ abstract final class HelperUtils {
   ///the filter function on your pocketbase instance:
   ///`pb.filter(query, params)`
   static (String expr, Map<String, dynamic> params) buildQuery(
-    ///the keywords to search for, will be comma seperated
-    String query,
+    ///the keywords to search for
+    List<String> keywords,
 
     ///the fields on your collection to look for this keyword
     List<String> searchableFields, {
     List<String>? otherFilters,
     Map<String, dynamic>? otherParams,
   }) {
-    final terms = query.split(',').map((str) => str.trim());
     var termMap = <String, dynamic>{};
 
     var conditions = <String>[];
-    for (final term in terms) {
+    for (final term in keywords) {
       final index = termMap.length;
       termMap['param$index'] = term;
       var subConditions = <String>[];
@@ -136,9 +135,14 @@ abstract final class HelperUtils {
     return map;
   }
 
-  ///Gets the names of files from their urls, this is simply the last path segment
+  ///Get the name of a file from their absolute url path, this is simply the last segment of the path
+  static String getNameFromUrl(String url) {
+    return Uri.parse(url).pathSegments.last;
+  }
+
+  ///Gets the names of files from their urls
   static List<String> getNamesFromUrls(List<String> fileUrls) {
-    return fileUrls.map((f) => Uri.parse(f).pathSegments.last).toList();
+    return fileUrls.map(getNameFromUrl).toList();
   }
 
   ///Convert filepaths into a correctly formatted filemap that is required by the addFiles method

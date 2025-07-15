@@ -29,7 +29,7 @@ class BaseHelper {
   ///Also works nice with flutters paginated table.
   Future<TypedResultList<T>> search<T extends Object>(
     String collection, {
-    required String searchQuery,
+    required List<String> keywords,
     required List<String> searchableFields,
     required RecordMapper<T> mapper,
     int page = 1,
@@ -46,7 +46,7 @@ class BaseHelper {
       String template,
       Map<String, dynamic> values,
     ) = HelperUtils.buildQuery(
-      searchQuery,
+      keywords,
       searchableFields,
       otherFilters: additionalExpressions,
       otherParams: additionalParams,
@@ -226,6 +226,33 @@ class BaseHelper {
         ).clean(),
       );
     }
+  }
+
+  ///Get the count of records that match the provided expression.
+  ///If no expression is provided this will return the amount of records in the collection
+  Future<int> count(
+    String collection, {
+    String? expr,
+    Map<String, dynamic>? params,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) async {
+    String? filter;
+    if (expr != null) {
+      filter = pb.filter(expr, params ?? const {});
+    }
+
+    final result = await pb
+        .collection(collection)
+        .getList(
+          page: 1,
+          perPage: 1,
+          filter: filter,
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    return result.totalItems;
   }
 
   ///Create a new record from the `data` argument
