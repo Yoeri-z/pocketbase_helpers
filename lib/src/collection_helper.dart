@@ -187,15 +187,17 @@ class CollectionHelper<T extends PocketBaseRecord> {
 
   ///Get a single record from a collection by its id,
   ///returns null if it is not available
-  Future<T?> getOneOrNull(
-    String id, {
+  Future<T?> getOneOrNull({
+    String? expr,
+    Map<String, String>? params,
     Map<String, String>? additionalExpansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getOneOrNull(
     collectionName,
-    id: id,
+    expr: expr,
+    params: params,
     mapper: _mapper,
     expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
     fields: fields,

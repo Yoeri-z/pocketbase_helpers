@@ -79,9 +79,6 @@ TypedResultList<MyRecord> paginatedList = await helper.getList(
   //optionally limit the number of fields that is included in the result
   //if left empty all fields are returned
   fields: ['id', 'title', 'status']
-  //also has header and query fields to add those to your request
-  headers: {}
-  query: {}
 );
 
 // Fetch full list
@@ -110,13 +107,10 @@ MyRecord record = await helper.addFiles(id, files: [...]);
 MyRecord record = await helper.removeFiles(id, fileNames: [...]);
 
 // Miscellaneous operations
-MyRecord maybeRecord = await helper.getOneOrNull(id);
-int count = await helper.count(
-  //expr fields take a pocketbase expression
-  expr: 'status = {:status}',
-  //params can be optionally supplied to escape values
-  params: {'status' : 'open'}
-);
+//find one record matching the filters if any exist
+MyRecord maybeRecord = await helper.getOneOrNull();
+//count records matching the filter
+int count = await helper.count();
 ```
 
 ### Merging expansions:

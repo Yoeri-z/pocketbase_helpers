@@ -197,19 +197,25 @@ class BaseHelper {
   ///if it is not available this returns null
   Future<T?> getOneOrNull<T extends Object>(
     String collection, {
-    required String id,
     required RecordMapper<T> mapper,
+    String? expr,
+    Map<String, String>? params,
     List<String>? fields,
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
+    String? filter;
+    if (expr != null) {
+      filter = pb.filter(expr, params ?? const {});
+    }
+
     final result = await pb
         .collection(collection)
         .getList(
           page: 1,
           perPage: 1,
-          filter: pb.filter('id={:id}', {'id': id}),
+          filter: filter,
           fields: fields?.join(','),
           expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
