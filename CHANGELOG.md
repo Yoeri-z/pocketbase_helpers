@@ -1,5 +1,5 @@
 ## 0.1.0
-- made getSingleOrNull method take and expression and parameters instead of a single id.
+- made getSingleOrNull method take an expression and parameters instead of a single id.
 
 ## 0.0.11
 - added `count` method to the `CollectionHelper` and `BaseHelper`

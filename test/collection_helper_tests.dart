@@ -77,6 +77,21 @@ void main() {
     expect(result.equals(actual), isTrue);
   });
 
+  test('getSingleOrNull returns null for no results', () async {
+    when(
+      () => service.getList(
+        page: 1,
+        perPage: 1,
+        expand: any(named: 'expand'),
+        query: any(named: 'query'),
+        headers: any(named: 'headers'),
+      ),
+    ).thenAnswer((_) async => ResultList(page: 1));
+
+    final result = await helper.getOneOrNull();
+    expect(result, null);
+  });
+
   test('update returns updated mapped record', () async {
     final (inputModel, expectedRecord) = DummyRecord.randomModel();
 
@@ -87,7 +102,6 @@ void main() {
         expand: any(named: 'expand'),
         query: any(named: 'query'),
         headers: any(named: 'headers'),
-        files: any(named: 'files'),
       ),
     ).thenAnswer((_) async => inputModel);
 
@@ -103,7 +117,6 @@ void main() {
       () => service.create(
         body: any(named: 'body'),
         expand: any(named: 'expand'),
-        files: any(named: 'files'),
         query: any(named: 'query'),
         headers: any(named: 'headers'),
       ),
