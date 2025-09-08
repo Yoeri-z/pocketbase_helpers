@@ -285,9 +285,11 @@ class CollectionHelper<T extends PocketBaseRecord> {
 
   ///Add files to a record, this takes:
   /// - The id of the record the files will belong too
-  /// - the filepaths pointing to where the files are stored locally
+  /// - The file fields name
+  /// - The filepaths pointing to where the files are stored locally
   Future<T> addFiles(
     String id, {
+    required String fieldName,
     required Map<String, Uint8List> files,
     Map<String, String>? additionalExpansions,
     List<String>? fields,
@@ -296,6 +298,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   }) => _helper.addFiles(
     collectionName,
     id: id,
+    fieldName: fieldName,
     files: files,
     fields: fields,
     mapper: _mapper,
@@ -306,9 +309,11 @@ class CollectionHelper<T extends PocketBaseRecord> {
 
   ///Remove files from a record, this takes:
   /// - The id of the record the files will belong too
-  /// - the file urls pointing to where the files are stored on the pocketbase instance (they can also be just the filenames)
+  /// - The file fields name
+  /// - The file urls pointing to where the files are stored on the pocketbase instance (they can also be just the filenames)
   Future<T> removeFiles(
     String id, {
+    required String fieldName,
     required List<String> fileNames,
     Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
@@ -316,6 +321,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   }) => _helper.removeFiles(
     collectionName,
     id: id,
+    fieldName: fieldName,
     fileNames: fileNames,
     mapper: _mapper,
     expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),

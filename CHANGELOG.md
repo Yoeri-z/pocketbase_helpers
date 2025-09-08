@@ -1,3 +1,6 @@
+## 0.2.0
+- made it so the file methods not only works on file fields named `files`, this adds a new required field to the methods.
+
 ## 0.1.0
 - made getSingleOrNull method take an expression and parameters instead of a single id.
 

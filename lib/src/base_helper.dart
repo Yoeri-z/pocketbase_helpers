@@ -342,10 +342,12 @@ class BaseHelper {
 
   ///Add files to a record, this takes:
   /// - The id of the record the files will belong too
+  /// - the file fields name
   /// - the filepaths pointing to where the files are stored locally
   Future<T> addFiles<T extends Object>(
     String collection, {
     required String id,
+    required String fieldName,
     required Map<String, Uint8List> files,
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
@@ -359,7 +361,11 @@ class BaseHelper {
           id,
           files: [
             for (final file in files.entries)
-              MultipartFile.fromBytes('files+', file.value, filename: file.key),
+              MultipartFile.fromBytes(
+                '$fieldName+',
+                file.value,
+                filename: file.key,
+              ),
           ],
           fields: fields?.join(','),
           expand: HelperUtils.buildExpansionString(expansions),
@@ -374,10 +380,12 @@ class BaseHelper {
 
   ///Remove files from a record, this takes:
   /// - The id of the record the files will belong too
-  /// - the names of the files to remove
+  /// - The file fields name
+  /// - The file urls pointing to where the files are stored on the pocketbase instance (they can also be just the filenames)
   Future<T> removeFiles<T extends Object>(
     String collection, {
     required String id,
+    required String fieldName,
     required List<String> fileNames,
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
@@ -389,7 +397,7 @@ class BaseHelper {
         .collection(collection)
         .update(
           id,
-          body: {'files-': fileNames},
+          body: {'$fieldName-': fileNames},
           expand: HelperUtils.buildExpansionString(expansions),
           fields: fields?.join(','),
           query: query ?? const {},
