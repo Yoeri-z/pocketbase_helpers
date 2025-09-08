@@ -2,8 +2,11 @@ import 'package:pocketbase_helpers/src/collection_helper.dart';
 
 ///The baseclass for all models that represent a pocketbase record.
 ///Extend your models with this class to use [CollectionHelper]s
-///models should be immutable
+///models, should be immutable
 abstract interface class PocketBaseRecord {
+  ///The baseclass for all models that represent a pocketbase record.
+  ///Extend your models with this class to use [CollectionHelper]s
+  ///models, should be immutable
   const PocketBaseRecord();
 
   ///The id of this record

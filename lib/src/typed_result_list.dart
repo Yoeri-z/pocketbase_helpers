@@ -1,5 +1,6 @@
 ///A typed version of pocketbases [ResultList]
 class TypedResultList<T> {
+  ///Constructs a typed version of pocketbases [ResultList]
   const TypedResultList(
     this.items, {
     required this.page,

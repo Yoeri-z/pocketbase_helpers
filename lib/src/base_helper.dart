@@ -340,6 +340,39 @@ class BaseHelper {
     return pb.buildURL('api/files/$collection/$id/$filename');
   }
 
+  ///Set a single file on single file fields:
+  /// - The id of the record the files will belong too
+  /// - the file fields name
+  /// - the filepaths pointing to where the files are stored locally
+  Future<T> setFile<T extends Object>(
+    String collection, {
+    required String id,
+    required String fieldName,
+    required Uint8List file,
+    required RecordMapper<T> mapper,
+    Map<String, String>? expansions,
+    List<String>? fields,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) async {
+    final record = await pb
+        .collection(collection)
+        .update(
+          id,
+          files: [
+            MultipartFile.fromBytes(fieldName, file, filename: fieldName),
+          ],
+          fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    return mapper(
+      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+    );
+  }
+
   ///Add files to a record, this takes:
   /// - The id of the record the files will belong too
   /// - the file fields name
@@ -398,6 +431,35 @@ class BaseHelper {
         .update(
           id,
           body: {'$fieldName-': fileNames},
+          expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    return mapper(
+      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+    );
+  }
+
+  ///Removes all files from a record, this takes:
+  /// - The id of the record the files will belong too
+  /// - The file fields name
+  Future<T> removeAllFiles<T extends Object>(
+    String collection, {
+    required String id,
+    required String fieldName,
+    required RecordMapper<T> mapper,
+    Map<String, String>? expansions,
+    List<String>? fields,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) async {
+    final record = await pb
+        .collection(collection)
+        .update(
+          id,
+          body: {fieldName: []},
           expand: HelperUtils.buildExpansionString(expansions),
           fields: fields?.join(','),
           query: query ?? const {},

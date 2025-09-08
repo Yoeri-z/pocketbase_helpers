@@ -283,6 +283,30 @@ class CollectionHelper<T extends PocketBaseRecord> {
     );
   }
 
+  ///Set a single file on single file fields:
+  /// - The id of the record the files will belong too
+  /// - the file fields name
+  /// - the filepaths pointing to where the files are stored locally
+  Future<T> setFile(
+    String id, {
+    required String fieldName,
+    required Uint8List file,
+    Map<String, String>? additionalExpansions,
+    List<String>? fields,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.setFile(
+    collectionName,
+    id: id,
+    fieldName: fieldName,
+    file: file,
+    fields: fields,
+    mapper: _mapper,
+    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    query: query,
+    headers: headers,
+  );
+
   ///Add files to a record, this takes:
   /// - The id of the record the files will belong too
   /// - The file fields name
@@ -323,6 +347,25 @@ class CollectionHelper<T extends PocketBaseRecord> {
     id: id,
     fieldName: fieldName,
     fileNames: fileNames,
+    mapper: _mapper,
+    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    query: query,
+    headers: headers,
+  );
+
+  ///Removes all files from a record, this takes:
+  /// - The id of the record the files will belong too
+  /// - The file fields name
+  Future<T> removeAllFiles(
+    String id, {
+    required String fieldName,
+    Map<String, String>? additionalExpansions,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.removeAllFiles(
+    collectionName,
+    id: id,
+    fieldName: fieldName,
     mapper: _mapper,
     expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
     query: query,

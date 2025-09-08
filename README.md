@@ -102,9 +102,12 @@ await helper.delete(id);
 
 
 // File utilities
-Uri uri = helper.getFileUrl(id, filename);
-MyRecord record = await helper.addFiles(id, files: [...]);
+
+MyRecord record = await helper.setFile(id, file: ...)
+MyRecord record = await helper.addFiles(id, files: {...});
 MyRecord record = await helper.removeFiles(id, fileNames: [...]);
+MyRecord record = await helper.removeAllFiles(id);
+Uri uri = helper.getFileUrl(id, filename);
 
 // Miscellaneous operations
 //find one record matching the filters if any exist
@@ -138,7 +141,7 @@ class Post implements PocketBaseRecord {
 final helper = CollectionHelper(
   pb //your pocketbase instance,
   collection: 'posts',
-  mapper: MyRecord.fromMap,
+  mapper: Post.fromMap,
   expansions: {
     'user_id' : 'user'
   },
@@ -165,7 +168,7 @@ A more flexible helper where `collection` and `mapper` are specified per method.
 
 ### HelperUtils
 
-Contains a few usefull static methods (but also available):
+Contains a few usefull static methods:
 ```dart
 //Method to clean up maps received form the pocketbase package
 //removes empty string values to make it work with dart nullsafety
