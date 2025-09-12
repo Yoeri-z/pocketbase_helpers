@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 
@@ -19,7 +17,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   CollectionHelper(
     this.pb, {
     required String collection,
-    required T Function(Map<String, dynamic>) mapper,
+    required RecordMapper<T> mapper,
     this.expansions,
   }) : _mapper = mapper,
        collectionName = collection,
@@ -288,107 +286,19 @@ class CollectionHelper<T extends PocketBaseRecord> {
     headers: headers,
   );
 
-  ///Get the absolute file url for a file, this function takes
-  /// - record id
-  /// - filename
-  /// and returns a correct Uri that can be used to retrieve it form the database
-  Uri getFileUrl(
+  ///Returns a helper to help operate on files in a record.
+  FileHelper fileField(
     String id,
-    String filename, {
-    Map<String, dynamic>? queryParameters,
+    String field, {
+    Map<String, String>? expansions,
   }) {
-    return pb.buildURL(
-      'api/files/$collectionName/$id/$filename',
-      queryParameters ?? {},
+    return FileHelper(
+      collection: collectionName,
+      pb: pb,
+      id: id,
+      field: field,
+      mapper: _mapper,
+      expansions: expansions,
     );
   }
-
-  ///Set a single file on single file fields:
-  /// - The id of the record the files will belong too
-  /// - the file fields name
-  /// - the filepaths pointing to where the files are stored locally
-  Future<T> setFile(
-    String id, {
-    required String fieldName,
-    required Uint8List file,
-    Map<String, String>? additionalExpansions,
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) => _helper.setFile(
-    collectionName,
-    id: id,
-    fieldName: fieldName,
-    file: file,
-    fields: fields,
-    mapper: _mapper,
-    expansions: _combineExp(additionalExpansions),
-    query: query,
-    headers: headers,
-  );
-
-  ///Add files to a record, this takes:
-  /// - The id of the record the files will belong too
-  /// - The file fields name
-  /// - The filepaths pointing to where the files are stored locally
-  Future<T> addFiles(
-    String id, {
-    required String fieldName,
-    required Map<String, Uint8List> files,
-    Map<String, String>? additionalExpansions,
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) => _helper.addFiles(
-    collectionName,
-    id: id,
-    fieldName: fieldName,
-    files: files,
-    fields: fields,
-    mapper: _mapper,
-    expansions: _combineExp(additionalExpansions),
-    query: query,
-    headers: headers,
-  );
-
-  ///Remove files from a record, this takes:
-  /// - The id of the record the files will belong too
-  /// - The file fields name
-  /// - The file urls pointing to where the files are stored on the pocketbase instance (they can also be just the filenames)
-  Future<T> removeFiles(
-    String id, {
-    required String fieldName,
-    required List<String> fileNames,
-    Map<String, String>? additionalExpansions,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) => _helper.removeFiles(
-    collectionName,
-    id: id,
-    fieldName: fieldName,
-    fileNames: fileNames,
-    mapper: _mapper,
-    expansions: _combineExp(additionalExpansions),
-    query: query,
-    headers: headers,
-  );
-
-  ///Removes all files from a record, this takes:
-  /// - The id of the record the files will belong too
-  /// - The file fields name
-  Future<T> removeAllFiles(
-    String id, {
-    required String fieldName,
-    Map<String, String>? additionalExpansions,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) => _helper.removeAllFiles(
-    collectionName,
-    id: id,
-    fieldName: fieldName,
-    mapper: _mapper,
-    expansions: _combineExp(additionalExpansions),
-    query: query,
-    headers: headers,
-  );
 }

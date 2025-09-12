@@ -342,144 +342,234 @@ class BaseHelper {
         );
   }
 
-  ///Get the absolute file url for a file, this function takes
-  /// - The collection name
-  /// - record id
-  /// - filename
-  /// and returns a correct Uri that can be used to retrieve it form the database
-  Uri getFileUrl(String collection, String id, String filename) {
-    return pb.buildURL('api/files/$collection/$id/$filename');
-  }
-
-  ///Set a single file on single file fields:
-  /// - The id of the record the files will belong too
-  /// - the file fields name
-  /// - the filepaths pointing to where the files are stored locally
-  Future<T> setFile<T extends Object>(
+  ///Returns a helper to help operate on files in a record.
+  FileHelper fileField<T extends PocketBaseRecord>(
     String collection, {
     required String id,
-    required String fieldName,
-    required Uint8List file,
+    required String field,
+    required RecordMapper mapper,
+    Map<String, String>? expansions,
+  }) {
+    return FileHelper(
+      collection: collection,
+      pb: pb,
+      id: id,
+      field: field,
+      mapper: mapper,
+      expansions: expansions,
+    );
+  }
+}
+
+///A helper to do operations on files.
+class FileHelper<T extends Object> {
+  ///A helper to do operations on files.
+  const FileHelper({
+    required PocketBase pb,
+    required this.collection,
+    required this.id,
+    required this.field,
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
+  }) : _pb = pb,
+       _mapper = mapper,
+       _expansions = expansions;
+
+  final PocketBase _pb;
+  final RecordMapper<T> _mapper;
+  final Map<String, String>? _expansions;
+
+  ///The collection this helper is operating on.
+  final String collection;
+
+  ///The id of the record this helper is operating on.
+  final String id;
+
+  ///The file field this helper is operating on
+  final String field;
+
+  ///Set a single file in the field.
+  Future<T> set(
+    String fileName,
+    Uint8List fileData, {
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await pb
+    final record = await _pb
         .collection(collection)
         .update(
           id,
-          files: [
-            MultipartFile.fromBytes(fieldName, file, filename: fieldName),
-          ],
+          files: [MultipartFile.fromBytes(field, fileData, filename: fileName)],
           fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(expansions),
+          expand: HelperUtils.buildExpansionString(_expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
-    return mapper(
-      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+    return _mapper(
+      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
     );
   }
 
-  ///Add files to a record, this takes:
-  /// - The id of the record the files will belong too
-  /// - the file fields name
-  /// - the filepaths pointing to where the files are stored locally
-  Future<T> addFiles<T extends Object>(
-    String collection, {
-    required String id,
-    required String fieldName,
-    required Map<String, Uint8List> files,
-    required RecordMapper<T> mapper,
-    Map<String, String>? expansions,
+  ///Sets the file field to be empty.
+  ///
+  ///Only works on fields that do not support multiple files.
+  ///If you want to clear all files on a multi file field, use [removeAll] instead.
+  Future<T> unset({
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await pb
+    final record = await _pb
+        .collection(collection)
+        .update(
+          id,
+          body: {field: null},
+          fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(_expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    return _mapper(
+      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
+    );
+  }
+
+  ///Add a file to the field, only works if the field supports multiple files.
+  Future<T> add(
+    String fileName,
+    Uint8List fileData, {
+    List<String>? fields,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) async {
+    final record = await _pb
         .collection(collection)
         .update(
           id,
           files: [
-            for (final file in files.entries)
+            MultipartFile.fromBytes('$field+', fileData, filename: fileName),
+          ],
+          fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(_expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    return _mapper(
+      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
+    );
+  }
+
+  ///Add multiple files to the field, only works if the fieldSupports multiple files.
+  Future<T> addMany(
+    Map<String, Uint8List> files, {
+    List<String>? fields,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) async {
+    final record = await _pb
+        .collection(collection)
+        .update(
+          id,
+          files: [
+            for (final entry in files.entries)
               MultipartFile.fromBytes(
-                '$fieldName+',
-                file.value,
-                filename: file.key,
+                '$field+',
+                entry.value,
+                filename: entry.key,
               ),
           ],
           fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(expansions),
+          expand: HelperUtils.buildExpansionString(_expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
-    return mapper(
-      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+    return _mapper(
+      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
     );
   }
 
-  ///Remove files from a record, this takes:
-  /// - The id of the record the files will belong too
-  /// - The file fields name
-  /// - The file urls pointing to where the files are stored on the pocketbase instance (they can also be just the filenames)
-  Future<T> removeFiles<T extends Object>(
-    String collection, {
-    required String id,
-    required String fieldName,
-    required List<String> fileNames,
-    required RecordMapper<T> mapper,
+  ///Remove a file from the field, only works if the field supports multiple files.
+  Future<T> remove(
+    String fileName, {
+    List<String>? fields,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) async {
+    final record = await _pb
+        .collection(collection)
+        .update(
+          id,
+          body: {
+            '$field-': [fileName],
+          },
+          fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(_expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    return _mapper(
+      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
+    );
+  }
+
+  ///Remove multiple files from the field, only works if the field supports multiple files.
+  Future<T> removeMany(
+    List<String> names, {
     Map<String, String>? expansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await pb
+    final record = await _pb
         .collection(collection)
         .update(
           id,
-          body: {'$fieldName-': fileNames},
-          expand: HelperUtils.buildExpansionString(expansions),
+          body: {'$field-': names},
           fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(_expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
-    return mapper(
-      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+    return _mapper(
+      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
     );
   }
 
-  ///Removes all files from a record, this takes:
-  /// - The id of the record the files will belong too
-  /// - The file fields name
-  Future<T> removeAllFiles<T extends Object>(
-    String collection, {
-    required String id,
-    required String fieldName,
-    required RecordMapper<T> mapper,
+  ///Remove multiple files from the field, only works if the field supports multiple files.
+  ///
+  ///If you want to remove the file from a single file field use [unset] instead.
+  Future<T> removeAll({
     Map<String, String>? expansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await pb
+    final record = await _pb
         .collection(collection)
         .update(
           id,
-          body: {fieldName: []},
-          expand: HelperUtils.buildExpansionString(expansions),
+          body: {'$field-': []},
           fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(_expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
 
-    return mapper(
-      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+    return _mapper(
+      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
     );
+  }
+
+  ///Get the absolute file url for a file on this record
+  Uri url(String filename) {
+    return _pb.buildURL('api/files/$collection/$id/$filename');
   }
 }
 

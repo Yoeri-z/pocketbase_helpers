@@ -65,55 +65,45 @@ You can use any serializer that converts a `Map<String, dynamic>` to your model.
 ### Available Methods
 
 ```dart
-// paginated list fetch
-TypedResultList<MyRecord> paginatedList = await helper.getList(
-  //expr fields take a pocketbase expression
-  expr: 'status = {:status}',
-
-  //params can be optionally supplied to escape values
-  params: {'status' : 'open'}
-
-  //a regular pocketbase sort string
-  sort: 'title,-status'
-
-  //optionally limit the number of fields that is included in the result
-  //if left empty all fields are returned
-  fields: ['id', 'title', 'status']
-);
-
-// Fetch full list
-List<MyRecord> list = await helper.getFullList(
-  //same parameters as helper.getList()
-);
-
-// Keyword Search paginated fetch
-// takes a list of keywords that will be matched in the supplied searchable fields
-TypedResultList<MyRecord> result = await helper.search(
-  keywords: [...],
-  searchableFields: [...],
-  //same parameters as helper.getList()
-);
-
 // CRUD operations (here record is one of your serializable models)
 MyRecord record = await helper.getOne(id);
+MyRecord record = await helper.getMultiple([id1, id2, ...]);
 MyRecord record = await helper.create(data: data);
 MyRecord record = await helper.update(record);
 await helper.delete(id);
 
-
-// File utilities
-
-MyRecord record = await helper.setFile(id, file: ...)
-MyRecord record = await helper.addFiles(id, files: {...});
-MyRecord record = await helper.removeFiles(id, fileNames: [...]);
-MyRecord record = await helper.removeAllFiles(id);
-Uri uri = helper.getFileUrl(id, filename);
-
-// Miscellaneous operations
-//find one record matching the filters if any exist
-MyRecord maybeRecord = await helper.getOneOrNull();
-//count records matching the filter
+// Operations with filter options
+TypedResultList<MyRecord> paginatedList = await helper.getList();
+List<MyRecord> list = await helper.getFullList();
+MyRecord? maybeRecord = await helper.getOneOrNull();
+TypedResultList<MyRecord> paginatedList = await helper.search(
+  //search for records containing all the keywords
+  keywords: [...],
+  searchableFields: [...],
+);
 int count = await helper.count();
+
+// File Operations
+final fileField = helper.fileField(id, fieldName);
+
+//single file field
+await fileField.set(name, data);
+await fileField.unset();
+
+//multi file field
+await fileField.add(name, data);
+await filefield.addMany({
+  name1 : name1Data,
+  name2: name2Data,
+  ...
+})
+await fileField.remove(name);
+await fileField.removeMany({
+  [name1, name2, name3 ...]
+});
+await fileField.removeAll();
+
+final uri = fileField.url(fileName);
 ```
 
 ### Merging expansions:
@@ -164,17 +154,16 @@ print(post.category.title)
 
 ### BaseHelper
 
-A more flexible helper where `collection` and `mapper` are specified per method. Useful in multi-collection use cases.
+A low level helper where `collection` and `mapper` are specified per method, useful when your dart model does not confirm to the `PocketBaseRecord` interface.
 
 ### HelperUtils
 
 Contains a few usefull static methods:
 ```dart
 //Method to clean up maps received form the pocketbase package
-//removes empty string values to make it work with dart nullsafety
 final map = HelperUtils.cleanMap(map);
 
-//Gets the names of files from their urls, this is simply the last path segment
+//Gets the names of files from their urls
 final names = HelperUtils.getNamesFromUrls(fileUrls);
 //usefull together with the removefiles method:
 helper.removeFiles(id, fileNames: names);
@@ -188,7 +177,7 @@ helper.addFiles(id, files: files);
 //builds a sort string for a single field
 final sort = HelperUtils.buildSortString(field, ascending);
 
-//build an advanced keyword search, returns an expressions and escaped parameters
+//build an advanced keyword search query, returns an expressions and escaped parameters
 final (expr, params) = HelperUtils.buildQuery(
     ///the keywords to search for, will be comma seperated
     [...],
@@ -200,7 +189,7 @@ final (expr, params) = HelperUtils.buildQuery(
 final filter = pb.filter(expr, params);
 ```
 
-Also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the json/map directly before it is sent to the server
+`HelperUtils` also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the raw json/map directly before it is sent to the server
 
 ```dart
 void registerHooks() {

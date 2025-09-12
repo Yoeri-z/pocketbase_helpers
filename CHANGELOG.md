@@ -1,7 +1,7 @@
 ## 0.2.0
 - added getMultiple method on helpers.
-- added setFile and removeAllFiles methods
-- made it so the file methods not only works on file fields named `files`, this adds a new required field to the methods.
+- removed file related methods from `BaseHelper` and `CollectionHelper` and moved them to `FileHelper`.
+- `FileHelper` is now available on `BaseHelper` and `CollectionHelper` through the `fileField` method
 
 ## 0.1.0
 - made getSingleOrNull method take an expression and parameters instead of a single id.
