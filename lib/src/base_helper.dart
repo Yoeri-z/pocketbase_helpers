@@ -193,6 +193,17 @@ class BaseHelper {
     );
   }
 
+  ///Get multiple records from a collection by their ids.
+  Future<List<T>> getMultiple<T extends Object>(
+    String collection, {
+    required Iterable<String> ids,
+    required RecordMapper<T> mapper,
+    List<String>? fields,
+    Map<String, String>? expansions,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => [for (final id in ids) getOne(collection, id: id, mapper: mapper)].wait;
+
   ///Get a single record from a collection by its id,
   ///if it is not available this returns null
   Future<T?> getOneOrNull<T extends Object>(

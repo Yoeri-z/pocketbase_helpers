@@ -82,6 +82,9 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///(equal to pb.collection(collectionName))
   RecordService get collection => pb.collection(collectionName);
 
+  Map<String, String> _combineExp(Map<String, String>? additionalExpansions) =>
+      (expansions ?? {})..addAll(additionalExpansions ?? const {});
+
   ///Execute a search on records based on requested table data.
   ///Takes [SearchParams] and fetches a [TypedResultList].
   ///Internally this method contructs and advanced filter, that keyword searches all the [searchableFields]
@@ -114,7 +117,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     additionalExpressions: additionalExpressions,
     additionalParams: additionalParams,
     fields: fields,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     query: query,
     headers: headers,
   );
@@ -140,7 +143,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     perPage: perPage,
     skipTotal: skipTotal,
     sort: sort,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     fields: fields,
     query: query,
     headers: headers,
@@ -163,7 +166,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     params: params,
     sort: sort,
     fields: fields,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     query: query,
     headers: headers,
   );
@@ -180,7 +183,24 @@ class CollectionHelper<T extends PocketBaseRecord> {
     id: id,
     mapper: _mapper,
     fields: fields,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
+    query: query,
+    headers: headers,
+  );
+
+  ///Get multiple records from a collection by their ids.
+  Future<List<T>> getMultiple(
+    Iterable<String> ids, {
+    Map<String, String>? additionalExpansions,
+    List<String>? fields,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.getMultiple(
+    collectionName,
+    ids: ids,
+    mapper: _mapper,
+    fields: fields,
+    expansions: _combineExp(additionalExpansions),
     query: query,
     headers: headers,
   );
@@ -199,7 +219,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     expr: expr,
     params: params,
     mapper: _mapper,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     fields: fields,
     query: query,
     headers: headers,
@@ -230,7 +250,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   }) => _helper.create(
     collectionName,
     data: data,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     fields: fields,
     mapper: _mapper,
     query: query,
@@ -248,7 +268,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     collectionName,
     record: record,
     mapper: _mapper,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     fields: fields,
     query: query,
     headers: headers,
@@ -302,7 +322,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     file: file,
     fields: fields,
     mapper: _mapper,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     query: query,
     headers: headers,
   );
@@ -326,7 +346,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     files: files,
     fields: fields,
     mapper: _mapper,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     query: query,
     headers: headers,
   );
@@ -348,7 +368,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     fieldName: fieldName,
     fileNames: fileNames,
     mapper: _mapper,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     query: query,
     headers: headers,
   );
@@ -367,7 +387,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     id: id,
     fieldName: fieldName,
     mapper: _mapper,
-    expansions: (expansions ?? {})..addAll(additionalExpansions ?? const {}),
+    expansions: _combineExp(additionalExpansions),
     query: query,
     headers: headers,
   );

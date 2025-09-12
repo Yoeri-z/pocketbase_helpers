@@ -1,4 +1,5 @@
 ## 0.2.0
+- added getMultiple method on helpers.
 - added setFile and removeAllFiles methods
 - made it so the file methods not only works on file fields named `files`, this adds a new required field to the methods.
 
