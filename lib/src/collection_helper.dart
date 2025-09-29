@@ -287,7 +287,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   );
 
   ///Returns a helper to help operate on files in a record.
-  FileHelper fileField(
+  FileHelper<T> fileField(
     String id,
     String field, {
     Map<String, String>? expansions,

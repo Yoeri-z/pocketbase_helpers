@@ -343,14 +343,14 @@ class BaseHelper {
   }
 
   ///Returns a helper to help operate on files in a record.
-  FileHelper fileField<T extends PocketBaseRecord>(
+  FileHelper<T> fileField<T extends PocketBaseRecord>(
     String collection, {
     required String id,
     required String field,
-    required RecordMapper mapper,
+    required RecordMapper<T> mapper,
     Map<String, String>? expansions,
   }) {
-    return FileHelper(
+    return FileHelper<T>(
       collection: collection,
       pb: pb,
       id: id,
