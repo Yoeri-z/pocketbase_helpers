@@ -301,4 +301,17 @@ class CollectionHelper<T extends PocketBaseRecord> {
       expansions: expansions,
     );
   }
+
+  Uri buildFileUrl(
+    String recordId,
+    String fileName, [
+    Map<String, dynamic> queryParameters = const {},
+  ]) {
+    return _helper.buildFileUrl(
+      collectionName,
+      recordId,
+      fileName,
+      queryParameters,
+    );
+  }
 }

@@ -359,6 +359,19 @@ class BaseHelper {
       expansions: expansions,
     );
   }
+
+  ///Get the absolute file url for a file on a record
+  Uri buildFileUrl(
+    String collection,
+    String recordId,
+    String fileName, [
+    Map<String, dynamic> queryParameters = const {},
+  ]) {
+    return pb.buildURL(
+      'api/files/$collection/$recordId/$fileName',
+      queryParameters,
+    );
+  }
 }
 
 ///A helper to do operations on files.
@@ -565,11 +578,6 @@ class FileHelper<T extends Object> {
     return _mapper(
       HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
     );
-  }
-
-  ///Get the absolute file url for a file on this record
-  Uri url(String filename) {
-    return _pb.buildURL('api/files/$collection/$id/$filename');
   }
 }
 
