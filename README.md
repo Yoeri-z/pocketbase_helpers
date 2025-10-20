@@ -83,7 +83,12 @@ TypedResultList<MyRecord> paginatedList = await helper.search(
 );
 int count = await helper.count();
 
+
 // File Operations
+//get the uri for a file
+final uri = helper.buildFileUrl(recordId, fileName);
+
+//get the file field to change the files attached to it.
 final fileField = helper.fileField(id, fieldName);
 
 //single file field
@@ -103,7 +108,6 @@ await fileField.removeMany({
 });
 await fileField.removeAll();
 
-final uri = fileField.url(fileName);
 ```
 
 ### Merging expansions:

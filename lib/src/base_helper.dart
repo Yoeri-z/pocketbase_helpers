@@ -343,20 +343,33 @@ class BaseHelper {
   }
 
   ///Returns a helper to help operate on files in a record.
-  FileHelper fileField<T extends PocketBaseRecord>(
+  FileHelper<T> fileField<T extends PocketBaseRecord>(
     String collection, {
     required String id,
     required String field,
-    required RecordMapper mapper,
+    required RecordMapper<T> mapper,
     Map<String, String>? expansions,
   }) {
-    return FileHelper(
+    return FileHelper<T>(
       collection: collection,
       pb: pb,
       id: id,
       field: field,
       mapper: mapper,
       expansions: expansions,
+    );
+  }
+
+  ///Get the absolute file url for a file on a record
+  Uri buildFileUrl(
+    String collection,
+    String recordId,
+    String fileName, [
+    Map<String, dynamic> queryParameters = const {},
+  ]) {
+    return pb.buildURL(
+      'api/files/$collection/$recordId/$fileName',
+      queryParameters,
     );
   }
 }
@@ -565,11 +578,6 @@ class FileHelper<T extends Object> {
     return _mapper(
       HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
     );
-  }
-
-  ///Get the absolute file url for a file on this record
-  Uri url(String filename) {
-    return _pb.buildURL('api/files/$collection/$id/$filename');
   }
 }
 

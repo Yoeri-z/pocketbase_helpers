@@ -2,6 +2,7 @@
 - added getMultiple method on helpers.
 - removed file related methods from `BaseHelper` and `CollectionHelper` and moved them to `FileHelper`.
 - `FileHelper` is now available on `BaseHelper` and `CollectionHelper` through the `fileField` method
+- change fileUrl method be named `buildFileUrl`
 
 ## 0.1.0
 - made getSingleOrNull method take an expression and parameters instead of a single id.
