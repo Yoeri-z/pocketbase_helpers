@@ -187,12 +187,15 @@ class CollectionHelper<T extends PocketBaseRecord> {
   );
 
   ///Get multiple records from a collection by their ids.
+  ///
+  ///If [iterative] is true, each record will be fetched by an individual api call.
   Future<List<T>> getMultiple(
     Iterable<String> ids, {
     Map<String, String>? additionalExpansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
+    bool iterative = false,
   }) => _helper.getMultiple(
     collectionName,
     ids: ids,
@@ -201,6 +204,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     expansions: _combineExp(additionalExpansions),
     query: query,
     headers: headers,
+    iterative: iterative,
   );
 
   ///Get a single record from a collection by its id,
@@ -264,7 +268,8 @@ class CollectionHelper<T extends PocketBaseRecord> {
     Map<String, String>? headers,
   }) => _helper.update(
     collectionName,
-    record: record,
+    id: record.id,
+    body: record.toMap(),
     mapper: _mapper,
     expansions: _combineExp(additionalExpansions),
     fields: fields,

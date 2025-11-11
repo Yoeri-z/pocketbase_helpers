@@ -148,4 +148,33 @@ void main() {
       ),
     ).called(1);
   });
+
+  test('get multiple constructs expression with all ids', () async {
+    final dummyRecords = List.generate(3, (_) => DummyRecord.randomModel());
+    final ids = dummyRecords.map((e) => e.$2.id).toList();
+
+    when(
+      () => pb.filter('id = {:id0} || id = {:id1} || id = {:id2}', {
+        'id0': ids[0],
+        'id1': ids[1],
+        'id2': ids[2],
+      }),
+    ).thenReturn('verified filter');
+
+    when(
+      () => service.getFullList(
+        filter: 'verified filter',
+        expand: any(named: 'expand'),
+        sort: any(named: 'sort'),
+        headers: any(named: 'headers'),
+        query: any(named: 'query'),
+      ),
+    ).thenAnswer((_) async => dummyRecords.map((r) => r.$1).toList());
+
+    final results = await helper.getMultiple(ids);
+
+    for (var (index, result) in results.indexed) {
+      expect(result.equals(dummyRecords[index].$2), isTrue);
+    }
+  });
 }

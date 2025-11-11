@@ -12,7 +12,7 @@ typedef RecordMapper<T extends Object> = T Function(Map<String, dynamic> map);
 ///
 ///This helper has the same methods as `CollectionHelper` but for each field the collection name and a mapper have to be supplied
 class BaseHelper {
-  BaseHelper(this.pb);
+  const BaseHelper(this.pb);
 
   ///The pocketbase instance used by this helper
   final PocketBase pb;
@@ -194,6 +194,8 @@ class BaseHelper {
   }
 
   ///Get multiple records from a collection by their ids.
+  ///
+  ///If [iterative] is true, each record will be fetched by an individual api call.
   Future<List<T>> getMultiple<T extends Object>(
     String collection, {
     required Iterable<String> ids,
@@ -202,15 +204,42 @@ class BaseHelper {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) => [for (final id in ids) getOne(collection, id: id, mapper: mapper)].wait;
+    bool iterative = false,
+  }) async {
+    if (iterative) {
+      return [
+        for (final id in ids) getOne(collection, id: id, mapper: mapper),
+      ].wait;
+    }
 
-  ///Get a single record from a collection by its id,
-  ///if it is not available this returns null
+    final expr = ids.indexed.map((r) => 'id = {:id${r.$1}}').join(' || ');
+    final params = {for (final r in ids.indexed) 'id${r.$1}': r.$2};
+    final result = await pb
+        .collection(collection)
+        .getFullList(
+          filter: pb.filter(expr, params),
+          expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
+
+    return result
+        .map(
+          (record) => mapper(
+            HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+          ),
+        )
+        .toList();
+  }
+
+  ///Get a single record from a collection by an expression,
+  ///if  no records match the expression null is returned.
   Future<T?> getOneOrNull<T extends Object>(
     String collection, {
     required RecordMapper<T> mapper,
     String? expr,
-    Map<String, String>? params,
+    Map<String, dynamic>? params,
     List<String>? fields,
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
@@ -299,9 +328,10 @@ class BaseHelper {
   }
 
   ///Update the supplied record, effectively this syncs the record that is supplied the database
-  Future<T> update<T extends PocketBaseRecord>(
+  Future<T> update<T extends Object>(
     String collection, {
-    required T record,
+    required String id,
+    required Map<String, dynamic> body,
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
     List<String>? fields,
@@ -311,8 +341,8 @@ class BaseHelper {
     final result = await pb
         .collection(collection)
         .update(
-          record.id,
-          body: HelperUtils.preUpdateHook(collection, pb, record.toMap()),
+          id,
+          body: HelperUtils.preUpdateHook(collection, pb, body),
           expand: HelperUtils.buildExpansionString(expansions),
           fields: fields?.join(','),
           query: query ?? const {},

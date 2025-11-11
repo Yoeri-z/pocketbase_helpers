@@ -1,3 +1,9 @@
+## 0.3.0
+- Changed implementation of `helper.getMultiple` call to use only one api call instead of a seperate call for each id.
+- Reworked the `baseHelper.update` method to take id and map instead of an object that implements the `PocketbaseRecord` interface,
+  this was done to improve consistency between the methods and allow the basehelper to be more flexible.
+  The `collectionHelper.update` method stays the same.
+
 ## 0.2.0
 - added getMultiple method on helpers.
 - removed file related methods from `BaseHelper` and `CollectionHelper` and moved them to `FileHelper`.
