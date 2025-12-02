@@ -206,6 +206,8 @@ class BaseHelper {
     Map<String, String>? headers,
     bool iterative = false,
   }) async {
+    if (ids.isEmpty) return [];
+
     if (iterative) {
       return [
         for (final id in ids) getOne(collection, id: id, mapper: mapper),
