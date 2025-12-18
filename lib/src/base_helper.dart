@@ -1,11 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketbase_helpers/pocketbase_helpers.dart';
-
-///A function that maps a record to an object
-typedef RecordMapper<T extends Object> = T Function(Map<String, dynamic> map);
+import './shared.dart';
+import './helper_utils.dart';
 
 ///The `BaseHelper` is a (slightly) more low lever version of the `CollectionHelper` and also used by `CollectionHelper` internally
 ///mainly usefull if your dart model and pocketbase collection do not map one to one or if it does not implement `PocketBaseRecord`
@@ -443,7 +441,9 @@ class FileHelper<T extends Object> {
         .collection(collection)
         .update(
           id,
-          files: [MultipartFile.fromBytes(field, fileData, filename: fileName)],
+          files: [
+            http.MultipartFile.fromBytes(field, fileData, filename: fileName),
+          ],
           fields: fields?.join(','),
           expand: HelperUtils.buildExpansionString(_expansions),
           query: query ?? const {},
@@ -493,7 +493,11 @@ class FileHelper<T extends Object> {
         .update(
           id,
           files: [
-            MultipartFile.fromBytes('$field+', fileData, filename: fileName),
+            http.MultipartFile.fromBytes(
+              '$field+',
+              fileData,
+              filename: fileName,
+            ),
           ],
           fields: fields?.join(','),
           expand: HelperUtils.buildExpansionString(_expansions),
@@ -519,7 +523,7 @@ class FileHelper<T extends Object> {
           id,
           files: [
             for (final entry in files.entries)
-              MultipartFile.fromBytes(
+              http.MultipartFile.fromBytes(
                 '$field+',
                 entry.value,
                 filename: entry.key,

@@ -1,5 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketbase_helpers/pocketbase_helpers.dart';
+
+import './shared.dart';
+import './base_helper.dart';
 
 ///A [CollectionHelper] is a class that helps you manage a specific collection.
 ///To see what a [CollectionHelper] can do, take a look at its methods.
