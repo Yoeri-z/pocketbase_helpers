@@ -1,6 +1,7 @@
 ## 0.5.0
 
 - Removed testing tools as it clashes with clean design principles.
+- Added precreation and preupdate hooks at the helper level.
 
 ## 0.4.1
 
