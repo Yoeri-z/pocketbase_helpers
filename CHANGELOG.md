@@ -1,6 +1,7 @@
 ## 0.4.1
 
 - Completed documentation (published with half complete docs oops)
+- Made `MockHandler` methods throw Unimplemented error by default.
 
 ## 0.4.0
 
