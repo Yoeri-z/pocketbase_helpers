@@ -10,10 +10,16 @@ import './helper_utils.dart';
 ///
 ///This helper has the same methods as `CollectionHelper` but for each field the collection name and a mapper have to be supplied
 class BaseHelper {
-  const BaseHelper(this.pb);
+  const BaseHelper(this.pb, {this.preCreationHook, this.preUpdateHook});
 
   ///The pocketbase instance used by this helper
   final PocketBase pb;
+
+  ///Register hook to modify the json that gets sent to the pocketbase server instance on creation
+  final HelperHook? preCreationHook;
+
+  ///Register hook to modify the json that gets sent to the pocketbase server instance on updates
+  final HelperHook? preUpdateHook;
 
   ///Execute a search on records based on requested table data.
   ///Takes [SearchParams] and fetches a [TypedResultList].
@@ -306,7 +312,6 @@ class BaseHelper {
     String collection, {
     required Map<String, dynamic> data,
     required RecordMapper<T> mapper,
-
     Map<String, String>? expansions,
     List<String>? fields,
     Map<String, dynamic>? query,
@@ -315,7 +320,11 @@ class BaseHelper {
     final record = await pb
         .collection(collection)
         .create(
-          body: HelperUtils.preCreationHook(collection, pb, data),
+          body: HelperUtils.preCreationHook(
+            collection,
+            pb,
+            preCreationHook?.call(collection, pb, data) ?? data,
+          ),
           expand: HelperUtils.buildExpansionString(expansions),
           fields: fields?.join(','),
           query: query ?? const {},
@@ -342,7 +351,11 @@ class BaseHelper {
         .collection(collection)
         .update(
           id,
-          body: HelperUtils.preUpdateHook(collection, pb, body),
+          body: HelperUtils.preUpdateHook(
+            collection,
+            pb,
+            preUpdateHook?.call(collection, pb, body) ?? body,
+          ),
           expand: HelperUtils.buildExpansionString(expansions),
           fields: fields?.join(','),
           query: query ?? const {},

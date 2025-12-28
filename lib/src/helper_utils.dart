@@ -3,23 +3,20 @@ import 'dart:typed_data';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/src/io_only/export.dart' as io;
 
+typedef HelperHook =
+    Map<String, dynamic> Function(
+      String collection,
+      PocketBase pb,
+      Map<String, dynamic> map,
+    );
+
 ///This class contains static helper functions that do not rely on the pocketbase instance
 abstract final class HelperUtils {
   ///Register hook to modify the json that gets sent to the pocketbase server instance on creation
-  static Map<String, dynamic> Function(
-    String collection,
-    PocketBase pb,
-    Map<String, dynamic> map,
-  )
-  preCreationHook = (_, _, map) => map;
+  static HelperHook preCreationHook = (_, _, map) => map;
 
   ///Register hook to modify the json that gets sent to the pocketbase server instance on updates
-  static Map<String, dynamic> Function(
-    String collection,
-    PocketBase pb,
-    Map<String, dynamic> map,
-  )
-  preUpdateHook = (_, _, map) => map;
+  static HelperHook preUpdateHook = (_, _, map) => map;
 
   ///Compose an advanced query string with paramaters, to do keyword searching on a collection
   ///This function takes the following fields:

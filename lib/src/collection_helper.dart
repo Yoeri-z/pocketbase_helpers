@@ -1,4 +1,5 @@
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_helpers/src/helper_utils.dart';
 
 import './shared.dart';
 import './base_helper.dart';
@@ -20,10 +21,16 @@ class CollectionHelper<T extends PocketBaseRecord> {
     this.pb, {
     required String collection,
     required RecordMapper<T> mapper,
+    this.preCreationHook,
+    this.preUpdateHook,
     this.expansions,
   }) : _mapper = mapper,
        collectionName = collection,
-       _helper = BaseHelper(pb);
+       _helper = BaseHelper(
+         pb,
+         preCreationHook: preCreationHook,
+         preUpdateHook: preUpdateHook,
+       );
 
   ///The pocketbase instance
   final PocketBase pb;
@@ -33,6 +40,12 @@ class CollectionHelper<T extends PocketBaseRecord> {
 
   ///The mapper that converts a json/map into one of your models
   final RecordMapper<T> _mapper;
+
+  ///Register hook to modify the json that gets sent to the pocketbase server instance on creation
+  final HelperHook? preCreationHook;
+
+  ///Register hook to modify the json that gets sent to the pocketbase server instance on updates
+  final HelperHook? preUpdateHook;
 
   ///The default expansions to be merged into this record
   ///This is better explained with an example:
