@@ -8,11 +8,12 @@ import './shared.dart';
 import './helper_utils.dart';
 import './mock_handler.dart';
 
-///The `BaseHelper` is a (slightly) more low lever version of the `CollectionHelper` and also used by `CollectionHelper` internally
+///The `BaseHelper` is a more low level version of the `CollectionHelper` and also used by `CollectionHelper` internally
 ///mainly usefull if your dart model and pocketbase collection do not map one to one or if it does not implement `PocketBaseRecord`
 ///
 ///This helper has the same methods as `CollectionHelper` but for each field the collection name and a mapper have to be supplied
 class BaseHelper {
+  /// Construct a [BaseHelper]
   const BaseHelper(this.pb);
 
   ///The pocketbase instance used by this helper
@@ -25,9 +26,9 @@ class BaseHelper {
   ) async {
     if (HelperUtils.isTesting) {
       final handler = HelperUtils.handlers.cast<MockHandler?>().firstWhere(
-            (h) => h!.collection == collection,
-            orElse: () => null,
-          );
+        (h) => h!.collection == collection,
+        orElse: () => null,
+      );
       if (handler != null) {
         return await onMock(handler);
       }
@@ -47,9 +48,9 @@ class BaseHelper {
   ) {
     if (HelperUtils.isTesting) {
       final handler = HelperUtils.handlers.cast<MockHandler?>().firstWhere(
-            (h) => h!.collection == collection,
-            orElse: () => null,
-          );
+        (h) => h!.collection == collection,
+        orElse: () => null,
+      );
       if (handler != null) {
         return onMock(handler);
       }
@@ -103,8 +104,10 @@ class BaseHelper {
         headers: headers,
       ),
       () {
-        final (String expr, Map<String, dynamic> values) =
-            HelperUtils.buildQuery(
+        final (
+          String expr,
+          Map<String, dynamic> values,
+        ) = HelperUtils.buildQuery(
           keywords,
           searchableFields,
           otherFilters: additionalExpressions,
@@ -160,7 +163,9 @@ class BaseHelper {
           filter = pb.filter(expr, params ?? const {});
         }
 
-        final result = await pb.collection(collection).getList(
+        final result = await pb
+            .collection(collection)
+            .getList(
               page: page,
               filter: filter,
               perPage: perPage,
@@ -175,8 +180,10 @@ class BaseHelper {
           result.items
               .map(
                 (record) => mapper(
-                  HelperUtils.mergeExpansions(expansions, record.toJson())
-                      .clean(),
+                  HelperUtils.mergeExpansions(
+                    expansions,
+                    record.toJson(),
+                  ).clean(),
                 ),
               )
               .toList(),
@@ -219,7 +226,9 @@ class BaseHelper {
         if (expr != null) {
           filter = pb.filter(expr, params ?? const {});
         }
-        final result = await pb.collection(collection).getFullList(
+        final result = await pb
+            .collection(collection)
+            .getFullList(
               filter: filter,
               batch: batch,
               sort: sort,
@@ -232,8 +241,10 @@ class BaseHelper {
         return result
             .map(
               (record) => mapper(
-                HelperUtils.mergeExpansions(expansions, record.toJson())
-                    .clean(),
+                HelperUtils.mergeExpansions(
+                  expansions,
+                  record.toJson(),
+                ).clean(),
               ),
             )
             .toList();
@@ -261,7 +272,9 @@ class BaseHelper {
         headers: headers,
       ),
       () async {
-        final result = await pb.collection(collection).getOne(
+        final result = await pb
+            .collection(collection)
+            .getOne(
               id,
               expand: HelperUtils.buildExpansionString(expansions),
               fields: fields?.join(','),
@@ -309,7 +322,9 @@ class BaseHelper {
 
         final expr = ids.indexed.map((r) => 'id = {:id${r.$1}}').join(' || ');
         final params = {for (final r in ids.indexed) 'id${r.$1}': r.$2};
-        final result = await pb.collection(collection).getFullList(
+        final result = await pb
+            .collection(collection)
+            .getFullList(
               filter: pb.filter(expr, params),
               expand: HelperUtils.buildExpansionString(expansions),
               fields: fields?.join(','),
@@ -320,8 +335,10 @@ class BaseHelper {
         return result
             .map(
               (record) => mapper(
-                HelperUtils.mergeExpansions(expansions, record.toJson())
-                    .clean(),
+                HelperUtils.mergeExpansions(
+                  expansions,
+                  record.toJson(),
+                ).clean(),
               ),
             )
             .toList();
@@ -357,7 +374,9 @@ class BaseHelper {
           filter = pb.filter(expr, params ?? const {});
         }
 
-        final result = await pb.collection(collection).getList(
+        final result = await pb
+            .collection(collection)
+            .getList(
               page: 1,
               perPage: 1,
               filter: filter,
@@ -405,7 +424,9 @@ class BaseHelper {
           filter = pb.filter(expr, params ?? const {});
         }
 
-        final result = await pb.collection(collection).getList(
+        final result = await pb
+            .collection(collection)
+            .getList(
               page: 1,
               perPage: 1,
               filter: filter,
@@ -438,7 +459,9 @@ class BaseHelper {
         headers: headers,
       ),
       () async {
-        final record = await pb.collection(collection).create(
+        final record = await pb
+            .collection(collection)
+            .create(
               body: HelperUtils.preCreationHook(collection, pb, data),
               expand: HelperUtils.buildExpansionString(expansions),
               fields: fields?.join(','),
@@ -475,7 +498,9 @@ class BaseHelper {
         headers: headers,
       ),
       () async {
-        final result = await pb.collection(collection).update(
+        final result = await pb
+            .collection(collection)
+            .update(
               id,
               body: HelperUtils.preUpdateHook(collection, pb, body),
               expand: HelperUtils.buildExpansionString(expansions),
@@ -501,14 +526,12 @@ class BaseHelper {
   }) {
     return _handleMock(
       collection,
-      (handler) => handler.onDelete(
-        id: id,
-        body: body,
-        query: query,
-        headers: headers,
-      ),
+      (handler) =>
+          handler.onDelete(id: id, body: body, query: query, headers: headers),
       () async {
-        final _ = await pb.collection(collection).delete(
+        final _ = await pb
+            .collection(collection)
+            .delete(
               id,
               body: body ?? const {},
               query: query ?? const {},
@@ -528,11 +551,9 @@ class BaseHelper {
   }) {
     return _handleMockSync(
       collection,
-      (handler) => handler.onFileField(
-        id: id,
-        field: field,
-        expansions: expansions,
-      ) as FileHelper<T>,
+      (handler) =>
+          handler.onFileField(id: id, field: field, expansions: expansions)
+              as FileHelper<T>,
       () => FileHelper<T>(
         collection: collection,
         pb: pb,
@@ -568,9 +589,9 @@ class FileHelper<T extends Object> {
     required this.field,
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
-  })  : _pb = pb,
-        _mapper = mapper,
-        _expansions = expansions;
+  }) : _pb = pb,
+       _mapper = mapper,
+       _expansions = expansions;
 
   final PocketBase _pb;
   final RecordMapper<T> _mapper;
@@ -593,7 +614,9 @@ class FileHelper<T extends Object> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await _pb.collection(collection).update(
+    final record = await _pb
+        .collection(collection)
+        .update(
           id,
           files: [
             http.MultipartFile.fromBytes(field, fileData, filename: fileName),
@@ -618,7 +641,9 @@ class FileHelper<T extends Object> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await _pb.collection(collection).update(
+    final record = await _pb
+        .collection(collection)
+        .update(
           id,
           body: {field: null},
           fields: fields?.join(','),
@@ -640,7 +665,9 @@ class FileHelper<T extends Object> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await _pb.collection(collection).update(
+    final record = await _pb
+        .collection(collection)
+        .update(
           id,
           files: [
             http.MultipartFile.fromBytes(
@@ -667,7 +694,9 @@ class FileHelper<T extends Object> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await _pb.collection(collection).update(
+    final record = await _pb
+        .collection(collection)
+        .update(
           id,
           files: [
             for (final entry in files.entries)
@@ -695,7 +724,9 @@ class FileHelper<T extends Object> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await _pb.collection(collection).update(
+    final record = await _pb
+        .collection(collection)
+        .update(
           id,
           body: {
             '$field-': [fileName],
@@ -718,7 +749,9 @@ class FileHelper<T extends Object> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await _pb.collection(collection).update(
+    final record = await _pb
+        .collection(collection)
+        .update(
           id,
           body: {'$field-': names},
           fields: fields?.join(','),
@@ -740,7 +773,9 @@ class FileHelper<T extends Object> {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final record = await _pb.collection(collection).update(
+    final record = await _pb
+        .collection(collection)
+        .update(
           id,
           body: {'$field-': []},
           fields: fields?.join(','),
