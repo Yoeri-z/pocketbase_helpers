@@ -5,8 +5,13 @@ import './base_helper.dart';
 
 ///A [CollectionHelper] is a class that helps you manage a specific collection.
 ///To see what a [CollectionHelper] can do, take a look at its methods.
+///[CollectionHelper] expects the following arguments:
+/// - pb: the pocketbase instance of your application
+/// - collection: the collection this helper operates on
+/// - mapper: a function that converts `Map<String, dynamic>` to your model
 class CollectionHelper<T extends PocketBaseRecord> {
-  ///Constructs a [CollectionHelper]
+  ///A [CollectionHelper] is a class that helps you manage a specific collection.
+  ///To see what a [CollectionHelper] can do, take a look at its methods.
   ///[CollectionHelper] expects the following arguments:
   /// - pb: the pocketbase instance of your application
   /// - collection: the collection this helper operates on
@@ -136,6 +141,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
     params: params,
     page: page,
     perPage: perPage,
+    skipTotal: skipTotal,
     sort: sort,
     expansions: _combineExp(additionalExpansions),
     fields: fields,

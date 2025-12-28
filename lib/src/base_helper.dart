@@ -1,67 +1,19 @@
-import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
-
 import './shared.dart';
 import './helper_utils.dart';
-import './mock_handler.dart';
 
-///The `BaseHelper` is a more low level version of the `CollectionHelper` and also used by `CollectionHelper` internally
+///The `BaseHelper` is a (slightly) more low lever version of the `CollectionHelper` and also used by `CollectionHelper` internally
 ///mainly usefull if your dart model and pocketbase collection do not map one to one or if it does not implement `PocketBaseRecord`
 ///
 ///This helper has the same methods as `CollectionHelper` but for each field the collection name and a mapper have to be supplied
 class BaseHelper {
-  /// Construct a [BaseHelper]
   const BaseHelper(this.pb);
 
   ///The pocketbase instance used by this helper
   final PocketBase pb;
-
-  Future<T> _handleMock<T>(
-    String collection,
-    Future<T> Function(MockHandler handler) onMock,
-    Future<T> Function() onReal,
-  ) async {
-    if (HelperUtils.isTesting) {
-      final handler = HelperUtils.handlers.cast<MockHandler?>().firstWhere(
-        (h) => h!.collection == collection,
-        orElse: () => null,
-      );
-      if (handler != null) {
-        return await onMock(handler);
-      }
-      if (!HelperUtils.fallbackWhenTesting) {
-        throw Exception(
-          'No mock handler found for collection "$collection" during testing.',
-        );
-      }
-    }
-    return await onReal();
-  }
-
-  T _handleMockSync<T>(
-    String collection,
-    T Function(MockHandler handler) onMock,
-    T Function() onReal,
-  ) {
-    if (HelperUtils.isTesting) {
-      final handler = HelperUtils.handlers.cast<MockHandler?>().firstWhere(
-        (h) => h!.collection == collection,
-        orElse: () => null,
-      );
-      if (handler != null) {
-        return onMock(handler);
-      }
-      if (!HelperUtils.fallbackWhenTesting) {
-        throw Exception(
-          'No mock handler found for collection "$collection" during testing.',
-        );
-      }
-    }
-    return onReal();
-  }
 
   ///Execute a search on records based on requested table data.
   ///Takes [SearchParams] and fetches a [TypedResultList].
@@ -87,46 +39,44 @@ class BaseHelper {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onSearch(
-        keywords: keywords,
-        searchableFields: searchableFields,
-        page: page,
-        perPage: perPage,
-        sort: sort,
-        additionalExpressions: additionalExpressions,
-        additionalParams: additionalParams,
-        fields: fields,
-        expansions: expansions,
-        query: query,
-        headers: headers,
-      ),
-      () {
-        final (
-          String expr,
-          Map<String, dynamic> values,
-        ) = HelperUtils.buildQuery(
-          keywords,
-          searchableFields,
-          otherFilters: additionalExpressions,
-          otherParams: additionalParams,
-        );
+  }) async {
+    final (
+      String template,
+      Map<String, dynamic> values,
+    ) = HelperUtils.buildQuery(
+      keywords,
+      searchableFields,
+      otherFilters: additionalExpressions,
+      otherParams: additionalParams,
+    );
 
-        return getList(
-          collection,
-          mapper: mapper,
-          expr: expr,
-          params: values,
+    final filter = pb.filter(template, values);
+
+    final result = await pb
+        .collection(collection)
+        .getList(
+          filter: filter,
+          sort: sort,
           page: page,
           perPage: perPage,
-          sort: sort,
-          fields: fields,
+          fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(expansions),
           query: query ?? const {},
           headers: headers ?? const {},
         );
-      },
+
+    return TypedResultList(
+      result.items
+          .map(
+            (record) => mapper(
+              HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+            ),
+          )
+          .toList(),
+      page: result.page,
+      perPage: result.perPage,
+      totalItems: result.totalItems,
+      totalPages: result.totalPages,
     );
   }
 
@@ -138,61 +88,44 @@ class BaseHelper {
     Map<String, dynamic>? params,
     int page = 1,
     int perPage = 30,
+    bool skipTotal = false,
     String? sort,
     List<String>? fields,
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onGetList(
-        expr: expr,
-        params: params,
-        page: page,
-        perPage: perPage,
-        sort: sort,
-        fields: fields,
-        expansions: expansions,
-        query: query,
-        headers: headers,
-      ),
-      () async {
-        String? filter;
-        if (expr != null) {
-          filter = pb.filter(expr, params ?? const {});
-        }
+  }) async {
+    String? filter;
+    if (expr != null) {
+      filter = pb.filter(expr, params ?? const {});
+    }
 
-        final result = await pb
-            .collection(collection)
-            .getList(
-              page: page,
-              filter: filter,
-              perPage: perPage,
-              expand: HelperUtils.buildExpansionString(expansions),
-              sort: sort,
-              fields: fields?.join(','),
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
-
-        return TypedResultList(
-          result.items
-              .map(
-                (record) => mapper(
-                  HelperUtils.mergeExpansions(
-                    expansions,
-                    record.toJson(),
-                  ).clean(),
-                ),
-              )
-              .toList(),
-          page: result.page,
+    final result = await pb
+        .collection(collection)
+        .getList(
+          page: page,
+          filter: filter,
           perPage: perPage,
-          totalItems: result.totalItems,
-          totalPages: result.totalPages,
+          skipTotal: skipTotal,
+          expand: HelperUtils.buildExpansionString(expansions),
+          sort: sort,
+          fields: fields?.join(','),
+          query: query ?? const {},
+          headers: headers ?? const {},
         );
-      },
+
+    return TypedResultList(
+      result.items
+          .map(
+            (record) => mapper(
+              HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+            ),
+          )
+          .toList(),
+      page: result.page,
+      perPage: perPage,
+      totalItems: result.totalItems,
+      totalPages: result.totalPages,
     );
   }
 
@@ -208,48 +141,30 @@ class BaseHelper {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onGetFullList(
-        batch: batch,
-        expr: expr,
-        params: params,
-        sort: sort,
-        fields: fields,
-        expansions: expansions,
-        query: query,
-        headers: headers,
-      ),
-      () async {
-        String? filter;
-        if (expr != null) {
-          filter = pb.filter(expr, params ?? const {});
-        }
-        final result = await pb
-            .collection(collection)
-            .getFullList(
-              filter: filter,
-              batch: batch,
-              sort: sort,
-              fields: fields?.join(','),
-              expand: HelperUtils.buildExpansionString(expansions),
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
+  }) async {
+    String? filter;
+    if (expr != null) {
+      filter = pb.filter(expr, params ?? const {});
+    }
+    final result = await pb
+        .collection(collection)
+        .getFullList(
+          filter: filter,
+          batch: batch,
+          sort: sort,
+          fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
 
-        return result
-            .map(
-              (record) => mapper(
-                HelperUtils.mergeExpansions(
-                  expansions,
-                  record.toJson(),
-                ).clean(),
-              ),
-            )
-            .toList();
-      },
-    );
+    return result
+        .map(
+          (record) => mapper(
+            HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+          ),
+        )
+        .toList();
   }
 
   ///Get a single record from a collection by its id
@@ -261,30 +176,18 @@ class BaseHelper {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onGetOne(
-        id: id,
-        fields: fields,
-        expansions: expansions,
-        query: query,
-        headers: headers,
-      ),
-      () async {
-        final result = await pb
-            .collection(collection)
-            .getOne(
-              id,
-              expand: HelperUtils.buildExpansionString(expansions),
-              fields: fields?.join(','),
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
-        return mapper(
-          HelperUtils.mergeExpansions(expansions, result.toJson()).clean(),
+  }) async {
+    final result = await pb
+        .collection(collection)
+        .getOne(
+          id,
+          expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
+          query: query ?? const {},
+          headers: headers ?? const {},
         );
-      },
+    return mapper(
+      HelperUtils.mergeExpansions(expansions, result.toJson()).clean(),
     );
   }
 
@@ -300,50 +203,34 @@ class BaseHelper {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
     bool iterative = false,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onGetMultiple(
-        ids: ids,
-        fields: fields,
-        expansions: expansions,
-        query: query,
-        headers: headers,
-        iterative: iterative,
-      ),
-      () async {
-        if (ids.isEmpty) return [];
+  }) async {
+    if (ids.isEmpty) return [];
 
-        if (iterative) {
-          return [
-            for (final id in ids) getOne(collection, id: id, mapper: mapper),
-          ].wait;
-        }
+    if (iterative) {
+      return [
+        for (final id in ids) getOne(collection, id: id, mapper: mapper),
+      ].wait;
+    }
 
-        final expr = ids.indexed.map((r) => 'id = {:id${r.$1}}').join(' || ');
-        final params = {for (final r in ids.indexed) 'id${r.$1}': r.$2};
-        final result = await pb
-            .collection(collection)
-            .getFullList(
-              filter: pb.filter(expr, params),
-              expand: HelperUtils.buildExpansionString(expansions),
-              fields: fields?.join(','),
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
+    final expr = ids.indexed.map((r) => 'id = {:id${r.$1}}').join(' || ');
+    final params = {for (final r in ids.indexed) 'id${r.$1}': r.$2};
+    final result = await pb
+        .collection(collection)
+        .getFullList(
+          filter: pb.filter(expr, params),
+          expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
 
-        return result
-            .map(
-              (record) => mapper(
-                HelperUtils.mergeExpansions(
-                  expansions,
-                  record.toJson(),
-                ).clean(),
-              ),
-            )
-            .toList();
-      },
-    );
+    return result
+        .map(
+          (record) => mapper(
+            HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+          ),
+        )
+        .toList();
   }
 
   ///Get a single record from a collection by an expression,
@@ -357,48 +244,34 @@ class BaseHelper {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onGetOneOrNull(
-        expr: expr,
-        params: params,
-        fields: fields,
-        expansions: expansions,
-        query: query,
-        headers: headers,
-      ),
-      () async {
-        String? filter;
-        if (expr != null) {
-          filter = pb.filter(expr, params ?? const {});
-        }
+  }) async {
+    String? filter;
+    if (expr != null) {
+      filter = pb.filter(expr, params ?? const {});
+    }
 
-        final result = await pb
-            .collection(collection)
-            .getList(
-              page: 1,
-              perPage: 1,
-              filter: filter,
-              fields: fields?.join(','),
-              expand: HelperUtils.buildExpansionString(expansions),
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
+    final result = await pb
+        .collection(collection)
+        .getList(
+          page: 1,
+          perPage: 1,
+          filter: filter,
+          fields: fields?.join(','),
+          expand: HelperUtils.buildExpansionString(expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
 
-        if (result.items.isEmpty) {
-          return null;
-        }
-        {
-          return mapper(
-            HelperUtils.mergeExpansions(
-              expansions,
-              result.items.first.toJson(),
-            ).clean(),
-          );
-        }
-      },
-    );
+    if (result.items.isEmpty) {
+      return null;
+    } else {
+      return mapper(
+        HelperUtils.mergeExpansions(
+          expansions,
+          result.items.first.toJson(),
+        ).clean(),
+      );
+    }
   }
 
   ///Get the count of records that match the provided expression.
@@ -409,34 +282,23 @@ class BaseHelper {
     Map<String, dynamic>? params,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onCount(
-        expr: expr,
-        params: params,
-        query: query,
-        headers: headers,
-      ),
-      () async {
-        String? filter;
-        if (expr != null) {
-          filter = pb.filter(expr, params ?? const {});
-        }
+  }) async {
+    String? filter;
+    if (expr != null) {
+      filter = pb.filter(expr, params ?? const {});
+    }
 
-        final result = await pb
-            .collection(collection)
-            .getList(
-              page: 1,
-              perPage: 1,
-              filter: filter,
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
+    final result = await pb
+        .collection(collection)
+        .getList(
+          page: 1,
+          perPage: 1,
+          filter: filter,
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
 
-        return result.totalItems;
-      },
-    );
+    return result.totalItems;
   }
 
   ///Create a new record from the `data` argument
@@ -444,35 +306,24 @@ class BaseHelper {
     String collection, {
     required Map<String, dynamic> data,
     required RecordMapper<T> mapper,
+
     Map<String, String>? expansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onCreate(
-        data: data,
-        expansions: expansions,
-        fields: fields,
-        query: query,
-        headers: headers,
-      ),
-      () async {
-        final record = await pb
-            .collection(collection)
-            .create(
-              body: HelperUtils.preCreationHook(collection, pb, data),
-              expand: HelperUtils.buildExpansionString(expansions),
-              fields: fields?.join(','),
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
-
-        return mapper(
-          HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
+  }) async {
+    final record = await pb
+        .collection(collection)
+        .create(
+          body: HelperUtils.preCreationHook(collection, pb, data),
+          expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
+          query: query ?? const {},
+          headers: headers ?? const {},
         );
-      },
+
+    return mapper(
+      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
     );
   }
 
@@ -486,33 +337,20 @@ class BaseHelper {
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) => handler.onUpdate(
-        id: id,
-        body: body,
-        expansions: expansions,
-        fields: fields,
-        query: query,
-        headers: headers,
-      ),
-      () async {
-        final result = await pb
-            .collection(collection)
-            .update(
-              id,
-              body: HelperUtils.preUpdateHook(collection, pb, body),
-              expand: HelperUtils.buildExpansionString(expansions),
-              fields: fields?.join(','),
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
-
-        return mapper(
-          HelperUtils.mergeExpansions(expansions, result.toJson()).clean(),
+  }) async {
+    final result = await pb
+        .collection(collection)
+        .update(
+          id,
+          body: HelperUtils.preUpdateHook(collection, pb, body),
+          expand: HelperUtils.buildExpansionString(expansions),
+          fields: fields?.join(','),
+          query: query ?? const {},
+          headers: headers ?? const {},
         );
-      },
+
+    return mapper(
+      HelperUtils.mergeExpansions(expansions, result.toJson()).clean(),
     );
   }
 
@@ -523,22 +361,15 @@ class BaseHelper {
     Map<String, dynamic>? body,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) {
-    return _handleMock(
-      collection,
-      (handler) =>
-          handler.onDelete(id: id, body: body, query: query, headers: headers),
-      () async {
-        final _ = await pb
-            .collection(collection)
-            .delete(
-              id,
-              body: body ?? const {},
-              query: query ?? const {},
-              headers: headers ?? const {},
-            );
-      },
-    );
+  }) async {
+    final _ = await pb
+        .collection(collection)
+        .delete(
+          id,
+          body: body ?? const {},
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
   }
 
   ///Returns a helper to help operate on files in a record.
@@ -549,19 +380,13 @@ class BaseHelper {
     required RecordMapper<T> mapper,
     Map<String, String>? expansions,
   }) {
-    return _handleMockSync(
-      collection,
-      (handler) =>
-          handler.onFileField(id: id, field: field, expansions: expansions)
-              as FileHelper<T>,
-      () => FileHelper<T>(
-        collection: collection,
-        pb: pb,
-        id: id,
-        field: field,
-        mapper: mapper,
-        expansions: expansions,
-      ),
+    return FileHelper<T>(
+      collection: collection,
+      pb: pb,
+      id: id,
+      field: field,
+      mapper: mapper,
+      expansions: expansions,
     );
   }
 
@@ -745,6 +570,7 @@ class FileHelper<T extends Object> {
   ///Remove multiple files from the field, only works if the field supports multiple files.
   Future<T> removeMany(
     List<String> names, {
+    Map<String, String>? expansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
@@ -769,6 +595,7 @@ class FileHelper<T extends Object> {
   ///
   ///If you want to remove the file from a single file field use [unset] instead.
   Future<T> removeAll({
+    Map<String, String>? expansions,
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
