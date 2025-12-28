@@ -1,3 +1,7 @@
+## 0.5.0
+
+- Removed testing tools as it clashes with clean design principles.
+
 ## 0.4.1
 
 - Completed documentation (published with half complete docs oops)
