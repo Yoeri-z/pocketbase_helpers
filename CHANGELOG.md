@@ -1,3 +1,7 @@
+## 0.4.1
+
+- Completed documentation (published with half complete docs oops)
+
 ## 0.4.0
 
 - Added testing utilities (see docs)

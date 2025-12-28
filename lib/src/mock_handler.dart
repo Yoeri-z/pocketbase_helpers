@@ -20,7 +20,9 @@ abstract class MockHandler {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<TypedResultList<T>> onGetList<T extends Object>({
     String? expr,
@@ -32,7 +34,9 @@ abstract class MockHandler {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<List<T>> onGetFullList<T extends Object>({
     int batch = 500,
@@ -43,7 +47,9 @@ abstract class MockHandler {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<T> onGetOne<T extends Object>({
     required String id,
@@ -51,7 +57,9 @@ abstract class MockHandler {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<List<T>> onGetMultiple<T extends Object>({
     required Iterable<String> ids,
@@ -60,7 +68,9 @@ abstract class MockHandler {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
     bool iterative = false,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<T?> onGetOneOrNull<T extends Object>({
     String? expr,
@@ -69,14 +79,18 @@ abstract class MockHandler {
     Map<String, String>? expansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<int> onCount({
     String? expr,
     Map<String, dynamic>? params,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<T> onCreate<T extends Object>({
     required Map<String, dynamic> data,
@@ -84,7 +98,9 @@ abstract class MockHandler {
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<T> onUpdate<T extends Object>({
     required String id,
@@ -93,20 +109,26 @@ abstract class MockHandler {
     List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   Future<void> onDelete({
     required String id,
     Map<String, dynamic>? body,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 
   MockFileHelper<T> onFileField<T extends PocketBaseRecord>({
     required String id,
     required String field,
     Map<String, String>? expansions,
-  });
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 abstract class MockFileHelper<T extends Object> implements FileHelper<T> {
