@@ -141,7 +141,6 @@ class CollectionHelper<T extends PocketBaseRecord> {
     params: params,
     page: page,
     perPage: perPage,
-    skipTotal: skipTotal,
     sort: sort,
     expansions: _combineExp(additionalExpansions),
     fields: fields,

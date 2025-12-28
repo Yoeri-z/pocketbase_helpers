@@ -1,3 +1,8 @@
+## 0.4.0
+
+- Added testing utilities (see docs)
+- Removed unused positional parameter on `FileHelper`s `removeMany` and `removeAll` methods.
+
 ## 0.3.1
 
 - Fixed a breaking bug where `helper.getMultiple` would return a full batch of records if no ids were supplied

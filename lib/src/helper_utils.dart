@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/src/io_only/export.dart' as io;
 
+import './mock_handler.dart';
+
 ///This class contains static helper functions that do not rely on the pocketbase instance
 abstract final class HelperUtils {
   ///Register hook to modify the json that gets sent to the pocketbase server instance on creation
@@ -154,5 +156,31 @@ abstract final class HelperUtils {
   ///Build a sort string from a given field and ascending boolean property
   static String? buildSortString({String? sortField, bool ascending = true}) {
     return sortField != null ? '${ascending ? '+' : '-'}$sortField' : null;
+  }
+
+  static List<MockHandler> handlers = [];
+
+  static bool _isTesting = false;
+
+  /// Wether or collections are currently being tested.
+  static bool get isTesting => _isTesting;
+
+  /// When testing, allow falling back to the pocketbase instance
+  /// if no handler is found for the given collection.
+  static bool fallbackWhenTesting = false;
+
+  /// Add fake handlers for collection.
+  /// These act as a replacement for the actual pocketbase instance on a per collection basis.
+  /// They can be used to verify that your methods have the expected output.
+  ///
+  /// Using this method automatically marks the environment for testing until it is terminated.
+  static void addHandlers(List<MockHandler> handlers) {
+    _isTesting = true;
+    HelperUtils.handlers.addAll(handlers);
+  }
+
+  /// Clear all collection handlers.
+  static void clearHandlers() {
+    handlers.clear();
   }
 }

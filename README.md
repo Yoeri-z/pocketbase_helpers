@@ -34,7 +34,7 @@ Future<TypedResultList<MyRecord>> getOpenRecords() async {
 ```dart
 Future<TypedResultList<MyRecord>> getOpenRecords() async {
   return helper.getList(
-        expr: 'status = {:status}', 
+        expr: 'status = {:status}',
         params: {'status': 'open'},
     );
 }
@@ -111,8 +111,10 @@ await fileField.removeAll();
 ```
 
 ### Merging expansions:
+
 Pocketbase allows you to expand foreign fields in your records,
 this package adds a utility to automatically remap these expansions to be put in your model classes:
+
 ```dart
 class User implements PocketbaseRecord{
   @override
@@ -163,6 +165,7 @@ A low level helper where `collection` and `mapper` are specified per method, use
 ### HelperUtils
 
 Contains a few usefull static methods:
+
 ```dart
 //Method to clean up maps received form the pocketbase package
 final map = HelperUtils.cleanMap(map);
@@ -212,7 +215,23 @@ void registerHooks() {
 }
 ```
 
+## Testing
+
+This package also provides a testing utility that easily allows you to test and intercept pocketbase calls, check incoming parameters, create mocks and return fake outputs.
+
+It works like this:
+
+```dart
+//define a handler for a collection
+class MyFakeHandler extends MockHandler{
+  @override
+  String get
+
+}
+
+```
+
 ## License and Contributing
 
 MIT licensed. Contributions are welcome — feel free to open issues or submit PRs.
-This package is in very early development phase, use at your own risk. 
+This package is in very early development phase, use at your own risk.

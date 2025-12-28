@@ -23,19 +23,27 @@ class BlogRecordMapper extends ClassMapperBase<BlogRecord> {
   static String _$id(BlogRecord v) => v.id;
   static const Field<BlogRecord, String> _f$id = Field('id', _$id);
   static String _$authorName(BlogRecord v) => v.authorName;
-  static const Field<BlogRecord, String> _f$authorName =
-      Field('authorName', _$authorName);
+  static const Field<BlogRecord, String> _f$authorName = Field(
+    'authorName',
+    _$authorName,
+  );
   static String _$title(BlogRecord v) => v.title;
   static const Field<BlogRecord, String> _f$title = Field('title', _$title);
   static String _$content(BlogRecord v) => v.content;
-  static const Field<BlogRecord, String> _f$content =
-      Field('content', _$content);
+  static const Field<BlogRecord, String> _f$content = Field(
+    'content',
+    _$content,
+  );
   static DateTime _$created(BlogRecord v) => v.created;
-  static const Field<BlogRecord, DateTime> _f$created =
-      Field('created', _$created);
+  static const Field<BlogRecord, DateTime> _f$created = Field(
+    'created',
+    _$created,
+  );
   static DateTime? _$updated(BlogRecord v) => v.updated;
-  static const Field<BlogRecord, DateTime> _f$updated =
-      Field('updated', _$updated);
+  static const Field<BlogRecord, DateTime> _f$updated = Field(
+    'updated',
+    _$updated,
+  );
 
   @override
   final MappableFields<BlogRecord> fields = const {
@@ -49,12 +57,13 @@ class BlogRecordMapper extends ClassMapperBase<BlogRecord> {
 
   static BlogRecord _instantiate(DecodingData data) {
     return BlogRecord(
-        id: data.dec(_f$id),
-        authorName: data.dec(_f$authorName),
-        title: data.dec(_f$title),
-        content: data.dec(_f$content),
-        created: data.dec(_f$created),
-        updated: data.dec(_f$updated));
+      id: data.dec(_f$id),
+      authorName: data.dec(_f$authorName),
+      title: data.dec(_f$title),
+      content: data.dec(_f$content),
+      created: data.dec(_f$created),
+      updated: data.dec(_f$updated),
+    );
   }
 
   @override
@@ -71,28 +80,36 @@ class BlogRecordMapper extends ClassMapperBase<BlogRecord> {
 
 mixin BlogRecordMappable {
   String toJson() {
-    return BlogRecordMapper.ensureInitialized()
-        .encodeJson<BlogRecord>(this as BlogRecord);
+    return BlogRecordMapper.ensureInitialized().encodeJson<BlogRecord>(
+      this as BlogRecord,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return BlogRecordMapper.ensureInitialized()
-        .encodeMap<BlogRecord>(this as BlogRecord);
+    return BlogRecordMapper.ensureInitialized().encodeMap<BlogRecord>(
+      this as BlogRecord,
+    );
   }
 
   BlogRecordCopyWith<BlogRecord, BlogRecord, BlogRecord> get copyWith =>
       _BlogRecordCopyWithImpl<BlogRecord, BlogRecord>(
-          this as BlogRecord, $identity, $identity);
+        this as BlogRecord,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return BlogRecordMapper.ensureInitialized()
-        .stringifyValue(this as BlogRecord);
+    return BlogRecordMapper.ensureInitialized().stringifyValue(
+      this as BlogRecord,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return BlogRecordMapper.ensureInitialized()
-        .equalsValue(this as BlogRecord, other);
+    return BlogRecordMapper.ensureInitialized().equalsValue(
+      this as BlogRecord,
+      other,
+    );
   }
 
   @override
@@ -109,13 +126,14 @@ extension BlogRecordValueCopy<$R, $Out>
 
 abstract class BlogRecordCopyWith<$R, $In extends BlogRecord, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call(
-      {String? id,
-      String? authorName,
-      String? title,
-      String? content,
-      DateTime? created,
-      DateTime? updated});
+  $R call({
+    String? id,
+    String? authorName,
+    String? title,
+    String? content,
+    DateTime? created,
+    DateTime? updated,
+  });
   BlogRecordCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -128,32 +146,35 @@ class _BlogRecordCopyWithImpl<$R, $Out>
   late final ClassMapperBase<BlogRecord> $mapper =
       BlogRecordMapper.ensureInitialized();
   @override
-  $R call(
-          {String? id,
-          String? authorName,
-          String? title,
-          String? content,
-          DateTime? created,
-          Object? updated = $none}) =>
-      $apply(FieldCopyWithData({
-        if (id != null) #id: id,
-        if (authorName != null) #authorName: authorName,
-        if (title != null) #title: title,
-        if (content != null) #content: content,
-        if (created != null) #created: created,
-        if (updated != $none) #updated: updated
-      }));
+  $R call({
+    String? id,
+    String? authorName,
+    String? title,
+    String? content,
+    DateTime? created,
+    Object? updated = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (authorName != null) #authorName: authorName,
+      if (title != null) #title: title,
+      if (content != null) #content: content,
+      if (created != null) #created: created,
+      if (updated != $none) #updated: updated,
+    }),
+  );
   @override
   BlogRecord $make(CopyWithData data) => BlogRecord(
-      id: data.get(#id, or: $value.id),
-      authorName: data.get(#authorName, or: $value.authorName),
-      title: data.get(#title, or: $value.title),
-      content: data.get(#content, or: $value.content),
-      created: data.get(#created, or: $value.created),
-      updated: data.get(#updated, or: $value.updated));
+    id: data.get(#id, or: $value.id),
+    authorName: data.get(#authorName, or: $value.authorName),
+    title: data.get(#title, or: $value.title),
+    content: data.get(#content, or: $value.content),
+    created: data.get(#created, or: $value.created),
+    updated: data.get(#updated, or: $value.updated),
+  );
 
   @override
   BlogRecordCopyWith<$R2, BlogRecord, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _BlogRecordCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _BlogRecordCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
