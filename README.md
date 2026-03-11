@@ -1,221 +1,61 @@
-# pocketbase_helpers
+# PocketBase Helpers
 
-A package to make working with PocketBase easier when using serializable models in Dart. It also adds a utility for keyword searching on your collections.
+A set of Dart/Flutter utilities and code generation tools to make working with [PocketBase](https://pocketbase.io) easier, type-safe, and more productive.
 
-## Motivation
+## Packages
 
-PocketBase is a great backend for Flutter — lightweight, easy to use, and highly extendable. However, the base [`pocketbase`](https://pub.dev/packages/pocketbase) package does not provide a lot of utilities for strongly typed data, which is one of Dart’s main strengths over JavaScript.
+| Package | Description | Version |
+| --- | --- | --- |
+| [**pocketbase_helpers**](./pocketbase_helpers) | Core library for typed records, collection helpers, and advanced searching. | `0.5.0` |
+| [**pocketbase_helpers_cli**](./pocketbase_helpers_cli) | Code generator to automatically create Dart models from `pb_schema.json`. | `1.0.0` |
 
-This package simplifies working with typed data and handles PocketBase's quirks (like empty strings instead of `null`) more gracefully.
+## Quick Start
 
-### Without pocketbase_helpers:
+### 1. Define your Schema
+Export your PocketBase schema to a `pb_schema.json` file (via the PocketBase Admin UI or API).
+
+### 2. Generate Models
+Use the CLI to generate strongly-typed model classes for all your collections:
+
+```bash
+# Activate locally (if not yet published)
+dart pub global activate --source path ./pocketbase_helpers_cli
+
+# Run generation
+pocketbase_helpers_cli -s pb_schema.json -o lib/models.dart
+```
+
+### 3. Use with PocketBase
+Enjoy strong typing, deep equality, and simplified CRUD operations:
 
 ```dart
-Future<TypedResultList<MyRecord>> getOpenRecords() async {
-  final filter = pb.filter('status = {:status}', {'status': 'open'});
+import 'package:pocketbase/pocketbase.dart';
+import 'models.dart';
 
-  final result = await pb.collection('my_collection').getList(filter: filter);
+final pb = PocketBase('http://127.0.0.1:8090');
 
-  return TypedResultList(
-    result.items.map((record) => MyRecord.fromJson(
-      // Remove empty strings to prevent parse errors
-      pruneEmptyStrings(record.toJson()),
-    )).toList(),
-    page: result.page,
-    perPage: result.perPage,
-    totalItems: result.totalItems,
-    totalPages: result.totalPages,
-  );
+void main() async {
+  // Use the generated static helper
+  final posts = await Posts.helper(pb).getFullList();
+
+  for (final post in posts) {
+    print('${post.title} created at ${post.created}');
+    
+    // Use copyWith for easy updates
+    final updated = post.copyWith(title: 'New Title');
+    await Posts.helper(pb).update(updated);
+  }
 }
 ```
 
-### With pocketbase_helpers:
+## Features
 
-```dart
-Future<TypedResultList<MyRecord>> getOpenRecords() async {
-  return helper.getList(
-        expr: 'status = {:status}',
-        params: {'status': 'open'},
-    );
-}
-```
+- **Type Safety**: No more `Map<String, dynamic>` everywhere.
+- **Deep Equality**: Generated models support `==` and `hashCode` (including lists).
+- **Search Utilities**: Built-in support for advanced keyword searching across multiple fields.
+- **File & Relation Helpers**: Simplified management of PocketBase file and relation fields.
+- **Hooks**: Register pre-creation and pre-update hooks at the helper level.
 
-## Getting Started
+## License
 
-### Creating a CollectionHelper:
-
-```dart
-final helper = CollectionHelper(
-  pb //your pocketbase instance,
-  collection: 'my_collection',
-  mapper: MyRecord.fromMap,
-);
-```
-
-Ensure your models implement `PocketBaseRecord`:
-
-```dart
-class MyRecord implements PocketBaseRecord {
-  // your model code
-}
-```
-
-You can use any serializer that converts a `Map<String, dynamic>` to your model.
-
-### Available Methods
-
-```dart
-// CRUD operations (here record is one of your serializable models)
-MyRecord record = await helper.getOne(id);
-MyRecord record = await helper.getMultiple([id1, id2, ...]);
-MyRecord record = await helper.create(data: data);
-MyRecord record = await helper.update(record);
-await helper.delete(id);
-
-// Operations with filter options
-TypedResultList<MyRecord> paginatedList = await helper.getList();
-List<MyRecord> list = await helper.getFullList();
-MyRecord? maybeRecord = await helper.getOneOrNull();
-TypedResultList<MyRecord> paginatedList = await helper.search(
-  //search for records containing all the keywords
-  keywords: [...],
-  searchableFields: [...],
-);
-int count = await helper.count();
-
-
-// File Operations
-//get the uri for a file
-final uri = helper.buildFileUrl(recordId, fileName);
-
-//get the file field to change the files attached to it.
-final fileField = helper.fileField(id, fieldName);
-
-//single file field
-await fileField.set(name, data);
-await fileField.unset();
-
-//multi file field
-await fileField.add(name, data);
-await filefield.addMany({
-  name1 : name1Data,
-  name2: name2Data,
-  ...
-})
-await fileField.remove(name);
-await fileField.removeMany({
-  [name1, name2, name3 ...]
-});
-await fileField.removeAll();
-
-```
-
-### Merging expansions:
-
-Pocketbase allows you to expand foreign fields in your records,
-this package adds a utility to automatically remap these expansions to be put in your model classes:
-
-```dart
-class User implements PocketbaseRecord{
-  @override
-  final String id;
-  final String name;
-
-  // rest of your model code
-}
-
-class Post implements PocketBaseRecord {
-  @override
-  final String id;
-  final String userId;
-  final User user;
-
-  // rest of your model code
-}
-
-//setup a helper with some base expansions
-final helper = CollectionHelper(
-  pb //your pocketbase instance,
-  collection: 'posts',
-  mapper: Post.fromMap,
-  expansions: {
-    'user_id' : 'user'
-  },
-);
-
-//now all the methods with this helper will automatically include the user field
-final post = await helper.getOne(postId);
-print(post.user.name)
-
-
-//to include more expansions on a per method basis use the [additionalExpansions] field:
-final post = await helper.getOne(postId, additionalExpansions: {
-  'category_id' : 'category'
-});
-print(post.user.name)
-print(post.category.title)
-```
-
-## Other Utilities
-
-### BaseHelper
-
-A low level helper where `collection` and `mapper` are specified per method, useful when your dart model does not confirm to the `PocketBaseRecord` interface.
-
-### HelperUtils
-
-Contains a few usefull static methods:
-
-```dart
-//Method to clean up maps received form the pocketbase package
-final map = HelperUtils.cleanMap(map);
-
-//Gets the names of files from their urls
-final names = HelperUtils.getNamesFromUrls(fileUrls);
-//usefull together with the removefiles method:
-helper.removeFiles(id, fileNames: names);
-
-///Convert local filepaths into a correctly formatted filemap that is required by the addFiles method
-///This method does not work for Web and WILL throw an error.
-final files = HelperUtils.pathsToFiles(paths);
-//usefull together with the addfiles method:
-helper.addFiles(id, files: files);
-
-//builds a sort string for a single field
-final sort = HelperUtils.buildSortString(field, ascending);
-
-//build an advanced keyword search query, returns an expressions and escaped parameters
-final (expr, params) = HelperUtils.buildQuery(
-    ///the keywords to search for, will be comma seperated
-    [...],
-    ///the fields on your collection to look for this keyword
-    [...],
-);
-
-//can be put into a pocketbase filter:
-final filter = pb.filter(expr, params);
-```
-
-`HelperUtils` also allows two hooks to be registered, a creation hook and an update hook, allowing you to modify the raw json/map directly before it is sent to the server
-
-```dart
-void registerHooks() {
-  HelperUtils.preCreationHook = (collection, pb, map) {
-    if (pb.authStore.isValid) {
-      //store the creator of every record
-      map['creator_id'] = pb.authStore.record?.id;
-    }
-    return map;
-  };
-
-  HelperUtils.preUpdateHook = (collection, pb, map) {
-    print('updated something');
-    return map;
-  };
-}
-```
-
-## License and Contributing
-
-MIT licensed. Contributions are welcome — feel free to open issues or submit PRs.
-This package is in very early development phase, use at your own risk.
+MIT
