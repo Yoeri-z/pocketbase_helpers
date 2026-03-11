@@ -241,29 +241,23 @@ class ModelGenerator {
 
   void _writeCopyWith(
     StringBuffer buffer,
-
     String className,
-
     List<dynamic> fields,
   ) {
     buffer.writeln("  $className copyWith({");
-
-    for (final field in fields) {
-      final fieldName = field['name'] as String;
-
-      buffer.writeln("    Object? $fieldName = _undefined,");
-    }
-
-    buffer.writeln("  }) {");
-    buffer.writeln("    return $className(");
-
     for (final field in fields) {
       final fieldName = field['name'] as String;
       final dartType = _toDartType(field);
 
-      buffer.writeln(
-        "      $fieldName: $fieldName == _undefined ? this.$fieldName : $fieldName as $dartType,",
-      );
+      // Ensure the parameter is nullable even if the field isn't
+      final paramType = dartType.endsWith('?') ? dartType : '$dartType?';
+      buffer.writeln("    $paramType $fieldName,");
+    }
+    buffer.writeln("  }) {");
+    buffer.writeln("    return $className(");
+    for (final field in fields) {
+      final fieldName = field['name'] as String;
+      buffer.writeln("      $fieldName: $fieldName ?? this.$fieldName,");
     }
     buffer.writeln("    );");
     buffer.writeln("  }");
@@ -336,8 +330,6 @@ class ModelGenerator {
   }
 
   void _writeFooter(StringBuffer buffer) {
-    buffer.writeln("const _undefined = Object();");
-
     buffer.writeln();
 
     final hasLists = schema.any(
