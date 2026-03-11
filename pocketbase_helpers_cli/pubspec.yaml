@@ -7,7 +7,7 @@ topics:
   - models
 
 executables:
-  pb_generate: bin/pb_generate.dart
+  pb_generate:
 
 environment:
   sdk: ^3.11.0
