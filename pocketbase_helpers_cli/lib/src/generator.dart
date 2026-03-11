@@ -46,6 +46,9 @@ class ModelGenerator {
   void _writeClass(StringBuffer buffer, Map<String, dynamic> collection) {
     final name = collection['name'] as String;
     final fields = collection['fields'] as List<dynamic>;
+
+    fields.removeWhere((f) => f['hidden'] == true);
+
     final singularName = _singularize(name);
     final pluralName = _pluralize(name);
     final className = _toClassName(singularName);
@@ -163,7 +166,8 @@ class ModelGenerator {
         }
         // Multi-select/file/relation
         return "($mapAccess as List<dynamic>).map((e) => e as String).toList()";
-
+      case 'geoPoint':
+        return "GeoPoint.fromMap($mapAccess)";
       default:
         return "$mapAccess as String${isNullable ? '?' : ''}";
     }
@@ -187,6 +191,8 @@ class ModelGenerator {
         } else {
           mapping = "$fieldName.toIso8601String()";
         }
+      } else if (typeStr == 'geoPoint') {
+        mapping = "$fieldName.toMap()";
       } else {
         mapping = fieldName;
       }
@@ -369,7 +375,8 @@ class ModelGenerator {
         if (maxSelect == 1) return 'String$suffix';
 
         return 'List<String>';
-
+      case 'geoPoint':
+        return 'GeoPoint';
       default:
         return 'dynamic';
     }

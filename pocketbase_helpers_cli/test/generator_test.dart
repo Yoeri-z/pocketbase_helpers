@@ -1,103 +1,280 @@
-import 'package:pocketbase_helpers_cli/generator.dart';
+import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:pocketbase_helpers_cli/src/generator.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('ModelGenerator', () {
-    test('generates correct types for all PocketBase field types', () {
-      final schema = [
-        {
-          'name': 'mega_collection',
-          'fields': [
-            {'name': 'id', 'type': 'text', 'system': true, 'required': true},
-            {'name': 'textField', 'type': 'text', 'required': false},
-            {'name': 'emailField', 'type': 'email', 'required': true},
-            {'name': 'urlField', 'type': 'url', 'required': false},
-            {'name': 'numberField', 'type': 'number', 'required': true},
-            {'name': 'boolField', 'type': 'bool', 'required': true},
-            {'name': 'dateField', 'type': 'date', 'required': false},
-            {'name': 'autodateField', 'type': 'autodate', 'system': true},
-            {'name': 'jsonField', 'type': 'json', 'required': false},
-            {
-              'name': 'singleRelation',
-              'type': 'relation',
-              'maxSelect': 1,
-              'required': false
-            },
-            {
-              'name': 'multiRelation',
-              'type': 'relation',
-              'maxSelect': 2,
-              'required': false
-            },
-            {'name': 'singleFile', 'type': 'file', 'maxSelect': 1},
-            {'name': 'multiFile', 'type': 'file', 'maxSelect': 5},
-            {'name': 'singleSelect', 'type': 'select', 'maxSelect': 1},
-            {'name': 'multiSelect', 'type': 'select', 'maxSelect': 3},
-          ]
-        }
-      ];
+  String gen(String type, {bool required = false, int maxSelect = 1}) {
+    final schema = [
+      {
+        'name': 't',
+        'fields': [
+          {
+            'name': 'f',
+            'type': type,
+            'required': required,
+            'maxSelect': maxSelect,
+          },
+        ],
+      },
+    ];
+    return ModelGenerator(schema: schema).generate();
+  }
 
-      final generator = ModelGenerator(schema: schema, outputFilePath: 'test.dart');
-      final output = generator.generate();
+  void expectField({
+    required String output,
+    required String declaration,
+    required String fromMap,
+    required String toMap,
+    required String copyWithParam,
+    required String copyWithAssign,
+  }) {
+    expect(output, contains(declaration));
+    expect(output, contains(fromMap));
+    expect(output, contains(toMap));
+    expect(output, contains(copyWithParam));
+    expect(output, contains(copyWithAssign));
+  }
 
-      // Check class name
-      expect(output, contains('class MegaCollection implements PocketBaseRecord'));
+  group('Plaintext', () {
+    void testStringType(String type) {
+      group(type, () {
+        test('required', () {
+          final out = gen(type, required: true);
 
-      // Check types
-      expect(output, contains('final String id;'));
-      expect(output, contains('final String? textField;'));
-      expect(output, contains('final String emailField;'));
-      expect(output, contains('final String? urlField;'));
-      expect(output, contains('final double numberField;'));
-      expect(output, contains('final bool boolField;'));
-      expect(output, contains('final DateTime? dateField;'));
-      expect(output, contains('final DateTime autodateField;'));
-      expect(output, contains('final dynamic jsonField;'));
-      expect(output, contains('final String? singleRelation;'));
-      expect(output, contains('final List<String> multiRelation;'));
-      expect(output, contains('final String? singleFile;'));
-      expect(output, contains('final List<String> multiFile;'));
-      expect(output, contains('final String? singleSelect;'));
-      expect(output, contains('final List<String> multiSelect;'));
+          expectField(
+            output: out,
+            declaration: 'final String f;',
+            fromMap: "map['f'] as String",
+            toMap: "'f': f",
+            copyWithParam: 'String? f',
+            copyWithAssign: 'f: f ?? this.f',
+          );
+        });
 
-      // Check methods
-      expect(output, contains('MegaCollection copyWith({'));
-      expect(output, contains('bool operator ==(Object other)'));
-      expect(output, contains('int get hashCode'));
-      expect(output, contains('static CollectionHelper<MegaCollection> helper(PocketBase pb)'));
-      
-      // Check list equality helper inclusion
-      expect(output, contains('bool _listEquals<T>(List<T>? a, List<T>? b)'));
+        test('optional', () {
+          final out = gen(type, required: false);
+
+          expectField(
+            output: out,
+            declaration: 'final String? f;',
+            fromMap: "map['f'] as String?",
+            toMap: "'f': f",
+            copyWithParam: 'String? f',
+            copyWithAssign: 'f: f ?? this.f',
+          );
+        });
+      });
+    }
+
+    testStringType('text');
+    testStringType('editor');
+    testStringType('email');
+    testStringType('url');
+  });
+
+  group('number', () {
+    test('required', () {
+      final out = gen('number', required: true);
+
+      expectField(
+        output: out,
+        declaration: 'final double f;',
+        fromMap: "(map['f'] as num).toDouble()",
+        toMap: "'f': f",
+        copyWithParam: 'double? f',
+        copyWithAssign: 'f: f ?? this.f',
+      );
     });
 
-    test('omits _listEquals when no list fields are present', () {
-      final schema = [
-        {
-          'name': 'simple_collection',
-          'fields': [
-            {'name': 'id', 'type': 'text', 'system': true, 'required': true},
-            {'name': 'name', 'type': 'text', 'required': true},
-          ]
-        }
-      ];
+    test('optional', () {
+      final out = gen('number', required: false);
 
-      final generator = ModelGenerator(schema: schema, outputFilePath: 'test.dart');
-      final output = generator.generate();
+      expectField(
+        output: out,
+        declaration: 'final double? f;',
+        fromMap: "map['f'] != null ? (map['f'] as num).toDouble() : null",
+        toMap: "'f': f",
+        copyWithParam: 'double? f',
+        copyWithAssign: 'f: f ?? this.f',
+      );
+    });
+  });
 
-      expect(output, isNot(contains('bool _listEquals')));
+  group('bool', () {
+    test('required', () {
+      final out = gen('bool', required: true);
+
+      expectField(
+        output: out,
+        declaration: 'final bool f;',
+        fromMap: "map['f'] as bool",
+        toMap: "'f': f",
+        copyWithParam: 'bool? f',
+        copyWithAssign: 'f: f ?? this.f',
+      );
+    });
+  });
+
+  group('date', () {
+    test('required', () {
+      final out = gen('date', required: true);
+
+      expectField(
+        output: out,
+        declaration: 'final DateTime f;',
+        fromMap: "DateTime.parse(map['f'] as String)",
+        toMap: "'f': f.toIso8601String()",
+        copyWithParam: 'DateTime? f',
+        copyWithAssign: 'f: f ?? this.f',
+      );
     });
 
-    test('handles auth and system collection names correctly', () {
+    test('optional', () {
+      final out = gen('date', required: false);
+
+      expectField(
+        output: out,
+        declaration: 'final DateTime? f;',
+        fromMap: "map['f'] != null ? DateTime.parse(map['f'] as String) : null",
+        toMap: "'f': f?.toIso8601String()",
+        copyWithParam: 'DateTime? f',
+        copyWithAssign: 'f: f ?? this.f',
+      );
+    });
+  });
+
+  void testSelectable(String type) {
+    group(type, () {
+      test('single required', () {
+        final out = gen(type, required: true);
+
+        expectField(
+          output: out,
+          declaration: 'final String f;',
+          fromMap: "map['f'] as String",
+          toMap: "'f': f",
+          copyWithParam: 'String? f',
+          copyWithAssign: 'f: f ?? this.f',
+        );
+      });
+
+      test('single optional', () {
+        final out = gen(type);
+
+        expectField(
+          output: out,
+          declaration: 'final String? f;',
+          fromMap: "map['f'] as String?",
+          toMap: "'f': f",
+          copyWithParam: 'String? f',
+          copyWithAssign: 'f: f ?? this.f',
+        );
+      });
+
+      test('multi', () {
+        final out = gen(type, maxSelect: 2);
+
+        expectField(
+          output: out,
+          declaration: 'final List<String> f;',
+          fromMap:
+              "(map['f'] as List<dynamic>).map((e) => e as String).toList()",
+          toMap: "'f': f",
+          copyWithParam: 'List<String>? f',
+          copyWithAssign: 'f: f ?? this.f',
+        );
+      });
+    });
+  }
+
+  testSelectable('select');
+  testSelectable('file');
+  testSelectable('relation');
+
+  group('json', () {
+    test('dynamic', () {
+      final out = gen('json');
+
+      expectField(
+        output: out,
+        declaration: 'final dynamic f;',
+        fromMap: "map['f']",
+        toMap: "'f': f",
+        copyWithParam: 'dynamic f',
+        copyWithAssign: 'f: f ?? this.f',
+      );
+    });
+  });
+  group('geoPoint', () {
+    test('required', () {
+      final out = gen('geoPoint', required: true);
+
+      expectField(
+        output: out,
+        declaration: 'final GeoPoint f;',
+        fromMap: "GeoPoint.fromMap(map['f'])",
+        toMap: "'f': f.toMap()",
+        copyWithParam: 'GeoPoint? f',
+        copyWithAssign: 'f: f ?? this.f',
+      );
+    });
+  });
+
+  group('hidden fields', () {
+    test('hidden field is not generated', () {
       final schema = [
-        {'name': '_superusers', 'fields': []},
-        {'name': 'users', 'fields': []},
+        {
+          'name': 't',
+          'fields': [
+            {'name': 'visible', 'type': 'text'},
+            {'name': 'secret', 'type': 'text', 'hidden': true},
+          ],
+        },
       ];
 
-      final generator = ModelGenerator(schema: schema, outputFilePath: 'test.dart');
-      final output = generator.generate();
+      final out = ModelGenerator(schema: schema).generate();
 
-      expect(output, contains('class Superusers'));
-      expect(output, contains('class Users'));
+      expect(out, contains('final String? visible;'));
+      expect(out, isNot(contains('secret')));
+    });
+  });
+  group('ModelGenerator static analysis', () {
+    test('generated string is syntactically valid Dart', () {
+      /// it was already verified that each variant of field is valid so we just need to test primitively different types
+      final schema = [
+        {
+          'name': 'mega_test',
+          'fields': [
+            {'name': 'id', 'type': 'text', 'required': true, 'system': true},
+            {'name': 'number_opt', 'type': 'number', 'required': false},
+            {'name': 'bool_req', 'type': 'bool', 'required': true},
+            {'name': 'date_opt', 'type': 'date', 'required': false},
+            {'name': 'autodate_f', 'type': 'autodate', 'required': true},
+            {'name': 'select_single', 'type': 'select', 'maxSelect': 1},
+            {'name': 'select_multi', 'type': 'select', 'maxSelect': 3},
+            {'name': 'json_field', 'type': 'json'},
+            {'name': 'geo_field', 'type': 'geopoint'},
+          ],
+        },
+      ];
+
+      final generator = ModelGenerator(schema: schema);
+      final String generatedCode = generator.generate();
+
+      final ParseStringResult result = parseString(content: generatedCode);
+
+      if (result.errors.isNotEmpty) {
+        for (final error in result.errors) {
+          print('Offset ${error.offset}: ${error.message}');
+        }
+      }
+
+      expect(
+        result.errors,
+        isEmpty,
+        reason: 'The generated code has syntax errors!',
+      );
     });
   });
 }

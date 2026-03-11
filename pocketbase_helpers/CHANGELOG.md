@@ -1,3 +1,7 @@
+## 0.5.2
+
+- Added class for the GeoPoint field
+
 ## 0.5.1
 
 - Added documentation about the new [pocketbase_helpers_cli](https://github.com/Yoeri-z/pocketbase_helpers/tree/stable/pocketbase_helpers_cli) to this package

@@ -64,3 +64,35 @@ enum AuthResult {
   /// The authentication failed because the server could not be reached or had an internal error.
   serverError,
 }
+
+/// Typesafe class for the GeoPoint field.
+class GeoPoint {
+  ///Construct a geopoint.
+  const GeoPoint({required this.lon, required this.lat});
+
+  /// The empty geopoint as defined by the pocketbase.io documentation.
+  const GeoPoint.empty() : lon = 0.0, lat = 0.0;
+
+  /// The longitude of this point
+  final double lon;
+
+  /// The latitude of this point
+  final double lat;
+
+  /// Convert this GeoPoint into a map
+  Map<String, dynamic> toMap() {
+    return {'lon': lon, 'lat': lat};
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GeoPoint && other.lon == lon && other.lat == lat;
+  }
+
+  @override
+  int get hashCode => Object.hashAll([lon, lat]);
+
+  static GeoPoint fromMap(dynamic map) {
+    return GeoPoint(lon: map['lon'] as double, lat: map['lat'] as double);
+  }
+}

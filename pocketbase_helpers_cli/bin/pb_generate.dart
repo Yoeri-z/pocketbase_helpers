@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:pocketbase_helpers_cli/generator.dart';
+import 'package:pocketbase_helpers_cli/src/generator.dart';
 
 final parser = ArgParser()
   ..addOption(
