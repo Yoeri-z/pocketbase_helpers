@@ -19,10 +19,10 @@ Use the CLI to generate strongly-typed model classes for all your collections:
 
 ```bash
 # Activate locally (if not yet published)
-dart pub global activate --source path ./pocketbase_helpers_cli
+dart pub global activate pocketbase_helpers_cli
 
 # Run generation
-pocketbase_helpers_cli -s pb_schema.json -o lib/models.dart
+pb_generate -s pb_schema.json -o lib/models.dart
 ```
 
 ### 3. Use with PocketBase
