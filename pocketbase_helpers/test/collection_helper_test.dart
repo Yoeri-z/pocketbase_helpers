@@ -17,7 +17,7 @@ void main() {
     service = MockRecordService();
     when(() => pb.collection(any())).thenReturn(service);
     helper = CollectionHelper(
-      pb,
+      pocketBaseInstance: pb,
       collection: 'dummy',
       mapper: DummyRecord.fromMap,
       expansions: DummyRecord.expansions,
@@ -149,6 +149,133 @@ void main() {
     ).called(1);
   });
 
+  test('search returns mapped result list with filter', () async {
+    final items = List.generate(2, (_) => DummyRecord.randomModel());
+    final fakeResult = ResultList(
+      items: items.map((e) => e.$1).toList(),
+      page: 1,
+      perPage: 30,
+      totalItems: 2,
+      totalPages: 1,
+    );
+
+    when(
+      () => pb.filter(any(), any()),
+    ).thenReturn('verified search filter');
+
+    when(
+      () => service.getList(
+        page: 1,
+        perPage: 30,
+        filter: 'verified search filter',
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((_) async => fakeResult);
+
+    final result = await helper.search(
+      keywords: ['key'],
+      searchableFields: ['field'],
+    );
+
+    expect(result.items.length, equals(2));
+    verify(() => pb.filter(any(), any())).called(1);
+  });
+
+  test('getFullList returns all mapped records', () async {
+    final items = List.generate(5, (_) => DummyRecord.randomModel());
+
+    when(
+      () => service.getFullList(
+        batch: 500,
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((_) async => items.map((e) => e.$1).toList());
+
+    final result = await helper.getFullList();
+
+    expect(result.length, equals(5));
+  });
+
+  test('count returns total items from service', () async {
+    when(
+      () => service.getList(
+        page: 1,
+        perPage: 1,
+        filter: any(named: 'filter'),
+      ),
+    ).thenAnswer((_) async => ResultList(totalItems: 42));
+
+    final result = await helper.count();
+
+    expect(result, equals(42));
+  });
+
+  test('buildFileUrl constructs correct URL', () {
+    when(
+      () => pb.buildURL(any(), any()),
+    ).thenReturn(Uri.parse('http://localhost/file'));
+
+    final url = helper.buildFileUrl('recordId', 'file.png');
+
+    expect(url.toString(), equals('http://localhost/file'));
+    verify(() => pb.buildURL('api/files/dummy/recordId/file.png', {})).called(1);
+  });
+
+  test('create calls preCreationHook', () async {
+    final (createdModel, expectedRecord) = DummyRecord.randomModel();
+    var hookCalled = false;
+
+    final helperWithHook = CollectionHelper(
+      collection: 'dummy',
+      mapper: DummyRecord.fromMap,
+      pocketBaseInstance: pb,
+      expansions: DummyRecord.expansions,
+      preCreationHook: (col, pb, data) {
+        hookCalled = true;
+        return data;
+      },
+    );
+
+    when(
+      () => service.create(
+        body: any(named: 'body'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((_) async => createdModel);
+
+    await helperWithHook.create(data: {'test': 'data'});
+
+    expect(hookCalled, isTrue);
+  });
+
+  test('update calls preUpdateHook', () async {
+    final (inputModel, expectedRecord) = DummyRecord.randomModel();
+    var hookCalled = false;
+
+    final helperWithHook = CollectionHelper(
+      collection: 'dummy',
+      mapper: DummyRecord.fromMap,
+      pocketBaseInstance: pb,
+      expansions: DummyRecord.expansions,
+      preUpdateHook: (col, pb, data) {
+        hookCalled = true;
+        return data;
+      },
+    );
+
+    when(
+      () => service.update(
+        any(),
+        body: any(named: 'body'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((_) async => inputModel);
+
+    await helperWithHook.update(expectedRecord);
+
+    expect(hookCalled, isTrue);
+  });
+
   test('get multiple constructs expression with all ids', () async {
     final dummyRecords = List.generate(3, (_) => DummyRecord.randomModel());
     final ids = dummyRecords.map((e) => e.$2.id).toList();
@@ -176,5 +303,49 @@ void main() {
     for (var (index, result) in results.indexed) {
       expect(result.equals(dummyRecords[index].$2), isTrue);
     }
+  });
+
+  test('fileField returns a FileHelper instance', () {
+    final fileHelper = helper.fileField('id', 'field');
+    expect(fileHelper, isA<FileHelper<DummyRecord>>());
+    expect(fileHelper.collection, equals('dummy'));
+    expect(fileHelper.id, equals('id'));
+    expect(fileHelper.field, equals('field'));
+  });
+
+  test('authWithPassword returns ok and mapped record on success', () async {
+    final (model, expected) = DummyRecord.randomModel();
+    final authData = RecordAuth(token: 'token', record: model);
+
+    when(
+      () => service.authWithPassword(
+        'test@example.com',
+        'password',
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((_) async => authData);
+
+    final (result, record) = await helper.authWithPassword(
+      'test@example.com',
+      'password',
+    );
+
+    expect(result, equals(AuthResult.ok));
+    expect(record?.id, equals(expected.id));
+  });
+
+  test('authWithPassword returns incorrectCredentials on 400 error', () async {
+    when(
+      () => service.authWithPassword(
+        any(),
+        any(),
+        expand: any(named: 'expand'),
+      ),
+    ).thenThrow(ClientException(statusCode: 400));
+
+    final (result, record) = await helper.authWithPassword('user', 'pass');
+
+    expect(result, equals(AuthResult.incorrectCredentials));
+    expect(record, isNull);
   });
 }

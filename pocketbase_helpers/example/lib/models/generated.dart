@@ -38,7 +38,6 @@ class User implements PocketBaseRecord {
       updated: DateTime.parse(map['updated'] as String),
     );
   }
-
   @override
   Map<String, dynamic> toMap() => {
     'id': id,
@@ -87,20 +86,23 @@ class User implements PocketBaseRecord {
 
   @override
   int get hashCode => Object.hashAll([
-    id,
-    email,
-    emailVisibility,
-    verified,
-    name,
-    avatar,
-    created,
-    updated,
-  ]);
+        id,
+        email,
+        emailVisibility,
+        verified,
+        name,
+        avatar,
+        created,
+        updated,
+      ]);
+
 }
 
 /// Helper for the users collection.
 abstract final class Users {
   ///Get the [CollectionHelper] for the users collection
-  static CollectionHelper<User> helper(PocketBase pb) =>
-      CollectionHelper(pb, collection: 'users', mapper: User.fromMap);
+  static CollectionHelper<User> api([PocketBase? pocketbaseInstance]) =>
+      CollectionHelper(pocketBaseInstance: pocketbaseInstance, collection: 'users', mapper: User.fromMap);
 }
+
+

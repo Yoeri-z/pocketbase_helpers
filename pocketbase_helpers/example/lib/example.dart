@@ -1,6 +1,5 @@
 import 'package:example/models/generated.dart';
-import 'package:pocketbase/pocketbase.dart';
 
-final pb = PocketBase('localhost:8090');
-
-Future<List<User>> fetch() => Users.helper(pb).getFullList();
+/// Fetch all the users from the pocketbase api
+/// since no connection was specified this will default to http://localhost:8090
+Future<List<User>> fetch() => Users.api().getFullList();

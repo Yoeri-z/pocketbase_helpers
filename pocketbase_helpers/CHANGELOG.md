@@ -1,3 +1,8 @@
+## 0.6.0
+
+- Added PocketBaseConnection singleton to manage the connection to pocketbase.
+- Changed the pocketbase instance in helper from positioned required to named optional.
+
 ## 0.5.2
 
 - Added class for the GeoPoint field

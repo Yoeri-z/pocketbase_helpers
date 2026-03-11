@@ -1,3 +1,7 @@
+## 0.3.0
+
+- Changed the generator to match the new [pocketbase_helpers] api.
+
 ## 0.2.0
 
 - Restructured files to follow standard package format

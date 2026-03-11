@@ -17,23 +17,23 @@ class CollectionHelper<T extends PocketBaseRecord> {
   /// - pb: the pocketbase instance of your application
   /// - collection: the collection this helper operates on
   /// - mapper: a function that converts `Map<String, dynamic>` to your model
-  CollectionHelper(
-    this.pb, {
+  CollectionHelper({
     required String collection,
     required RecordMapper<T> mapper,
+    PocketBase? pocketBaseInstance,
     this.preCreationHook,
     this.preUpdateHook,
     this.expansions,
   }) : _mapper = mapper,
        collectionName = collection,
        _helper = BaseHelper(
-         pb,
+         pocketBaseInstance: pocketBaseInstance,
          preCreationHook: preCreationHook,
          preUpdateHook: preUpdateHook,
        );
 
-  ///The pocketbase instance
-  final PocketBase pb;
+  ///The pocketbase instance used by this helper.
+  PocketBase get pb => _helper.pb;
 
   ///The collection this collection helper operates on
   final String collectionName;
@@ -334,4 +334,115 @@ class CollectionHelper<T extends PocketBaseRecord> {
       queryParameters,
     );
   }
+
+  /// Authenticate a record with email/username and password.
+  Future<(AuthResult, T?)> authWithPassword(
+    String email,
+    String password, {
+    Map<String, String>? additionalExpansions,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.authWithPassword(
+    collectionName,
+    email,
+    password,
+    mapper: _mapper,
+    expansions: _combineExp(additionalExpansions),
+    query: query,
+    headers: headers,
+  );
+
+  /// Authenticate a record with OAuth2.
+  Future<(AuthResult, T?)> authWithOAuth2(
+    String provider, {
+    required void Function(Uri url) urlCallback,
+    Map<String, String>? additionalExpansions,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.authWithOAuth2(
+    collectionName,
+    provider,
+    urlCallback: urlCallback,
+    mapper: _mapper,
+    expansions: _combineExp(additionalExpansions),
+    query: query,
+    headers: headers,
+  );
+
+  /// Authenticate a record with OTP.
+  Future<(AuthResult, T?)> authWithOTP(
+    String otpId,
+    String code, {
+    Map<String, String>? additionalExpansions,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.authWithOTP(
+    collectionName,
+    otpId,
+    code,
+    mapper: _mapper,
+    expansions: _combineExp(additionalExpansions),
+    query: query,
+    headers: headers,
+  );
+
+  /// Request OTP for a specific email.
+  Future<AuthResult> requestOTP(
+    String email, {
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) =>
+      _helper.requestOTP(collectionName, email, query: query, headers: headers);
+
+  /// Request a verification email.
+  Future<AuthResult> requestVerification(
+    String email, {
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.requestVerification(
+    collectionName,
+    email,
+    query: query,
+    headers: headers,
+  );
+
+  /// Confirm a verification request.
+  Future<AuthResult> confirmVerification(
+    String token, {
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.confirmVerification(
+    collectionName,
+    token,
+    query: query,
+    headers: headers,
+  );
+
+  /// Request a password reset email.
+  Future<AuthResult> requestPasswordReset(
+    String email, {
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.requestPasswordReset(
+    collectionName,
+    email,
+    query: query,
+    headers: headers,
+  );
+
+  /// Confirm a password reset request.
+  Future<AuthResult> confirmPasswordReset(
+    String token,
+    String password,
+    String passwordConfirm, {
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+  }) => _helper.confirmPasswordReset(
+    collectionName,
+    token,
+    password,
+    passwordConfirm,
+    query: query,
+    headers: headers,
+  );
 }

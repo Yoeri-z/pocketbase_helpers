@@ -294,10 +294,10 @@ class ModelGenerator {
       "  ///Get the [CollectionHelper] for the $collectionName collection",
     );
     buffer.writeln(
-      "  static CollectionHelper<$className> helper(PocketBase pb) =>",
+      "  static CollectionHelper<$className> api([PocketBase? pocketbaseInstance]) =>",
     );
     buffer.writeln(
-      "      CollectionHelper(pb, collection: '$collectionName', mapper: $className.fromMap);",
+      "      CollectionHelper(pocketBaseInstance: pocketbaseInstance, collection: '$collectionName', mapper: $className.fromMap);",
     );
   }
 

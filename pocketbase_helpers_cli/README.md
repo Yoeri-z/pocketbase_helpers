@@ -12,10 +12,17 @@ dart pub global activate pocketbase_helpers_cli
 
 ## Usage
 
-Once activated, you can run the tool by default it assumes the pocketbase schema is in the working directory:
+Generate type-safe Dart models from your PocketBase schema:
 
 ```bash
-pb_generate --output lib/models/generated/pocketbase_models.dart
+# Basic usage with default schema file
+pb_generate -o lib/models.dart
+
+# Specify schema file and output path
+pb_generate -s pb_schema.json -o lib/generated/models.dart
+
+# Generate to standard location for Flutter projects
+pb_generate -o lib/models/generated.dart
 ```
 
 ### Options
@@ -26,12 +33,38 @@ pb_generate --output lib/models/generated/pocketbase_models.dart
 | `--output` | `-o` | `lib/models.dart` | Path where the generated Dart file should be saved. |
 | `--help`   | `-h` |                   | Show usage information.                             |
 
-This cli tool uses string buffers to write the file, this means generation is lighting fast but the source code is a little hard on the eyes. Because pocketbase models are fairly flat I see this as acceptable.
+## Generated Code Example
 
-## More docs
+The CLI generates complete, type-safe models:
 
-For more documentation see [`pocketbase_helpers`](https://pub.dev/packages/pocketbase_helpers).
+```dart
+// Model class for each collection
+class User implements PocketBaseRecord {
+  @override
+  final String id;
+  final String email;
+  final String name;
+  final DateTime created;
+  final DateTime updated;
 
-## License
+  // Constructor, fromMap, toMap, copyWith, ==, hashCode
+}
+
+// Helper class with static api() method
+abstract final class Users {
+  static CollectionHelper<User> api([PocketBase? pocketbaseInstance]) =>
+      CollectionHelper(
+        pocketBaseInstance: pocketbaseInstance,
+        collection: 'users',
+        mapper: User.fromMap,
+      );
+}
+```
+
+---
+
+For more documentation see [pocketbase_helpers](https://pub.dev/packages/pocketbase_helpers)
+
+## LICENSE
 
 MIT
