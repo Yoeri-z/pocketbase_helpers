@@ -37,7 +37,7 @@ void main(List<String> arguments) {
 }
 
 void _generateModels(List<dynamic> schema, String outputPath) {
-  final generator = ModelGenerator(schema: schema, outputFilePath: outputPath);
+  final generator = ModelGenerator(schema: schema);
   final output = generator.generate();
 
   final outputFile = File(outputPath);

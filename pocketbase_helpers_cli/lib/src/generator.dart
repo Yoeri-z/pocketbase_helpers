@@ -1,11 +1,12 @@
 /// Generator for PocketBase models from a pb_schema.json file.
 class ModelGenerator {
+  /// The jsonDecoded pocketbase schema
   final List<dynamic> schema;
 
-  final String outputFilePath;
+  /// Create a Model generator
+  ModelGenerator({required this.schema});
 
-  ModelGenerator({required this.schema, required this.outputFilePath});
-
+  /// Generate the class defenitions from [schema] as a string.
   String generate() {
     final buffer = StringBuffer();
 
@@ -346,16 +347,18 @@ class ModelGenerator {
       case 'text':
       case 'email':
       case 'url':
-      case 'password':
       case 'editor':
         return 'String$suffix';
+      case 'password':
+        return 'String';
       case 'number':
         return 'double$suffix';
       case 'bool':
         return 'bool$suffix';
       case 'date':
-      case 'autodate':
         return 'DateTime$suffix';
+      case 'autodate':
+        return 'DateTime';
       case 'json':
         return 'dynamic';
       case 'relation':
