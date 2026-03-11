@@ -101,7 +101,10 @@ class ModelGenerator {
 
     for (final field in fields) {
       final fieldName = field['name'] as String;
-      final required = field['required'] == true || field['system'] == true;
+      final required =
+          field['required'] == true ||
+          field['system'] == true ||
+          field['type'] == 'autodate';
 
       if (required) {
         buffer.writeln("    required this.$fieldName,");
