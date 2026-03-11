@@ -52,24 +52,24 @@ class Superuser implements PocketBaseRecord {
   };
 
   Superuser copyWith({
-    Object? id = _undefined,
-    Object? password = _undefined,
-    Object? tokenKey = _undefined,
-    Object? email = _undefined,
-    Object? emailVisibility = _undefined,
-    Object? verified = _undefined,
-    Object? created = _undefined,
-    Object? updated = _undefined,
+    String? id,
+    String? password,
+    String? tokenKey,
+    String? email,
+    bool? emailVisibility,
+    bool? verified,
+    DateTime? created,
+    DateTime? updated,
   }) {
     return Superuser(
-      id: id == _undefined ? this.id : id as String,
-      password: password == _undefined ? this.password : password as String,
-      tokenKey: tokenKey == _undefined ? this.tokenKey : tokenKey as String,
-      email: email == _undefined ? this.email : email as String,
-      emailVisibility: emailVisibility == _undefined ? this.emailVisibility : emailVisibility as bool,
-      verified: verified == _undefined ? this.verified : verified as bool,
-      created: created == _undefined ? this.created : created as DateTime,
-      updated: updated == _undefined ? this.updated : updated as DateTime,
+      id: id ?? this.id,
+      password: password ?? this.password,
+      tokenKey: tokenKey ?? this.tokenKey,
+      email: email ?? this.email,
+      emailVisibility: emailVisibility ?? this.emailVisibility,
+      verified: verified ?? this.verified,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
     );
   }
 
@@ -164,28 +164,28 @@ class User implements PocketBaseRecord {
   };
 
   User copyWith({
-    Object? id = _undefined,
-    Object? password = _undefined,
-    Object? tokenKey = _undefined,
-    Object? email = _undefined,
-    Object? emailVisibility = _undefined,
-    Object? verified = _undefined,
-    Object? name = _undefined,
-    Object? avatar = _undefined,
-    Object? created = _undefined,
-    Object? updated = _undefined,
+    String? id,
+    String? password,
+    String? tokenKey,
+    String? email,
+    bool? emailVisibility,
+    bool? verified,
+    String? name,
+    String? avatar,
+    DateTime? created,
+    DateTime? updated,
   }) {
     return User(
-      id: id == _undefined ? this.id : id as String,
-      password: password == _undefined ? this.password : password as String,
-      tokenKey: tokenKey == _undefined ? this.tokenKey : tokenKey as String,
-      email: email == _undefined ? this.email : email as String,
-      emailVisibility: emailVisibility == _undefined ? this.emailVisibility : emailVisibility as bool,
-      verified: verified == _undefined ? this.verified : verified as bool,
-      name: name == _undefined ? this.name : name as String?,
-      avatar: avatar == _undefined ? this.avatar : avatar as String?,
-      created: created == _undefined ? this.created : created as DateTime?,
-      updated: updated == _undefined ? this.updated : updated as DateTime?,
+      id: id ?? this.id,
+      password: password ?? this.password,
+      tokenKey: tokenKey ?? this.tokenKey,
+      email: email ?? this.email,
+      emailVisibility: emailVisibility ?? this.emailVisibility,
+      verified: verified ?? this.verified,
+      name: name ?? this.name,
+      avatar: avatar ?? this.avatar,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
     );
   }
 
@@ -268,20 +268,20 @@ class AuthOrigin implements PocketBaseRecord {
   };
 
   AuthOrigin copyWith({
-    Object? id = _undefined,
-    Object? collectionRef = _undefined,
-    Object? recordRef = _undefined,
-    Object? fingerprint = _undefined,
-    Object? created = _undefined,
-    Object? updated = _undefined,
+    String? id,
+    String? collectionRef,
+    String? recordRef,
+    String? fingerprint,
+    DateTime? created,
+    DateTime? updated,
   }) {
     return AuthOrigin(
-      id: id == _undefined ? this.id : id as String,
-      collectionRef: collectionRef == _undefined ? this.collectionRef : collectionRef as String,
-      recordRef: recordRef == _undefined ? this.recordRef : recordRef as String,
-      fingerprint: fingerprint == _undefined ? this.fingerprint : fingerprint as String,
-      created: created == _undefined ? this.created : created as DateTime,
-      updated: updated == _undefined ? this.updated : updated as DateTime,
+      id: id ?? this.id,
+      collectionRef: collectionRef ?? this.collectionRef,
+      recordRef: recordRef ?? this.recordRef,
+      fingerprint: fingerprint ?? this.fingerprint,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
     );
   }
 
@@ -360,22 +360,22 @@ class ExternalAuth implements PocketBaseRecord {
   };
 
   ExternalAuth copyWith({
-    Object? id = _undefined,
-    Object? collectionRef = _undefined,
-    Object? recordRef = _undefined,
-    Object? provider = _undefined,
-    Object? providerId = _undefined,
-    Object? created = _undefined,
-    Object? updated = _undefined,
+    String? id,
+    String? collectionRef,
+    String? recordRef,
+    String? provider,
+    String? providerId,
+    DateTime? created,
+    DateTime? updated,
   }) {
     return ExternalAuth(
-      id: id == _undefined ? this.id : id as String,
-      collectionRef: collectionRef == _undefined ? this.collectionRef : collectionRef as String,
-      recordRef: recordRef == _undefined ? this.recordRef : recordRef as String,
-      provider: provider == _undefined ? this.provider : provider as String,
-      providerId: providerId == _undefined ? this.providerId : providerId as String,
-      created: created == _undefined ? this.created : created as DateTime,
-      updated: updated == _undefined ? this.updated : updated as DateTime,
+      id: id ?? this.id,
+      collectionRef: collectionRef ?? this.collectionRef,
+      recordRef: recordRef ?? this.recordRef,
+      provider: provider ?? this.provider,
+      providerId: providerId ?? this.providerId,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
     );
   }
 
@@ -452,20 +452,20 @@ class Mfa implements PocketBaseRecord {
   };
 
   Mfa copyWith({
-    Object? id = _undefined,
-    Object? collectionRef = _undefined,
-    Object? recordRef = _undefined,
-    Object? method = _undefined,
-    Object? created = _undefined,
-    Object? updated = _undefined,
+    String? id,
+    String? collectionRef,
+    String? recordRef,
+    String? method,
+    DateTime? created,
+    DateTime? updated,
   }) {
     return Mfa(
-      id: id == _undefined ? this.id : id as String,
-      collectionRef: collectionRef == _undefined ? this.collectionRef : collectionRef as String,
-      recordRef: recordRef == _undefined ? this.recordRef : recordRef as String,
-      method: method == _undefined ? this.method : method as String,
-      created: created == _undefined ? this.created : created as DateTime,
-      updated: updated == _undefined ? this.updated : updated as DateTime,
+      id: id ?? this.id,
+      collectionRef: collectionRef ?? this.collectionRef,
+      recordRef: recordRef ?? this.recordRef,
+      method: method ?? this.method,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
     );
   }
 
@@ -544,22 +544,22 @@ class Otp implements PocketBaseRecord {
   };
 
   Otp copyWith({
-    Object? id = _undefined,
-    Object? collectionRef = _undefined,
-    Object? recordRef = _undefined,
-    Object? password = _undefined,
-    Object? sentTo = _undefined,
-    Object? created = _undefined,
-    Object? updated = _undefined,
+    String? id,
+    String? collectionRef,
+    String? recordRef,
+    String? password,
+    String? sentTo,
+    DateTime? created,
+    DateTime? updated,
   }) {
     return Otp(
-      id: id == _undefined ? this.id : id as String,
-      collectionRef: collectionRef == _undefined ? this.collectionRef : collectionRef as String,
-      recordRef: recordRef == _undefined ? this.recordRef : recordRef as String,
-      password: password == _undefined ? this.password : password as String,
-      sentTo: sentTo == _undefined ? this.sentTo : sentTo as String,
-      created: created == _undefined ? this.created : created as DateTime,
-      updated: updated == _undefined ? this.updated : updated as DateTime,
+      id: id ?? this.id,
+      collectionRef: collectionRef ?? this.collectionRef,
+      recordRef: recordRef ?? this.recordRef,
+      password: password ?? this.password,
+      sentTo: sentTo ?? this.sentTo,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
     );
   }
 
@@ -640,22 +640,22 @@ class BaseCollection implements PocketBaseRecord {
   };
 
   BaseCollection copyWith({
-    Object? id = _undefined,
-    Object? textfield = _undefined,
-    Object? numberfield = _undefined,
-    Object? relationfield = _undefined,
-    Object? selectfield = _undefined,
-    Object? created = _undefined,
-    Object? updated = _undefined,
+    String? id,
+    String? textfield,
+    double? numberfield,
+    String? relationfield,
+    String? selectfield,
+    DateTime? created,
+    DateTime? updated,
   }) {
     return BaseCollection(
-      id: id == _undefined ? this.id : id as String,
-      textfield: textfield == _undefined ? this.textfield : textfield as String?,
-      numberfield: numberfield == _undefined ? this.numberfield : numberfield as double?,
-      relationfield: relationfield == _undefined ? this.relationfield : relationfield as String?,
-      selectfield: selectfield == _undefined ? this.selectfield : selectfield as String?,
-      created: created == _undefined ? this.created : created as DateTime?,
-      updated: updated == _undefined ? this.updated : updated as DateTime?,
+      id: id ?? this.id,
+      textfield: textfield ?? this.textfield,
+      numberfield: numberfield ?? this.numberfield,
+      relationfield: relationfield ?? this.relationfield,
+      selectfield: selectfield ?? this.selectfield,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
     );
   }
 
@@ -716,12 +716,12 @@ class ViewCollection implements PocketBaseRecord {
   };
 
   ViewCollection copyWith({
-    Object? id = _undefined,
-    Object? textfield = _undefined,
+    String? id,
+    String? textfield,
   }) {
     return ViewCollection(
-      id: id == _undefined ? this.id : id as String,
-      textfield: textfield == _undefined ? this.textfield : textfield as String?,
+      id: id ?? this.id,
+      textfield: textfield ?? this.textfield,
     );
   }
 
@@ -747,5 +747,4 @@ abstract final class ViewCollections {
       CollectionHelper(pb, collection: 'view_collection', mapper: ViewCollection.fromMap);
 }
 
-const _undefined = Object();
 
