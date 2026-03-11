@@ -14,6 +14,7 @@ class ModelGenerator {
     _writeImports(buffer);
 
     for (final collection in schema) {
+      if (_isPrivateCollection(collection)) continue;
       _writeClass(buffer, collection);
     }
 
@@ -21,6 +22,9 @@ class ModelGenerator {
 
     return buffer.toString();
   }
+
+  bool _isPrivateCollection(dynamic collection) =>
+      (collection['name'] as String).startsWith('_');
 
   void _writeHeader(StringBuffer buffer) {
     buffer.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
@@ -69,6 +73,10 @@ class ModelGenerator {
 
     _writeHashCode(buffer, fields);
 
+    if (className == helperClassName) {
+      _writeStaticHelper(buffer, className, name);
+    }
+
     buffer.writeln("}");
 
     buffer.writeln();
@@ -77,22 +85,6 @@ class ModelGenerator {
       buffer.writeln("/// Helper for the $name collection.");
 
       buffer.writeln("abstract final class $helperClassName {");
-
-      _writeStaticHelper(buffer, className, name);
-
-      buffer.writeln("}");
-
-      buffer.writeln();
-    } else {
-      // If names are same (couldn't singularize), put helper inside class but renamed
-
-      // Or just keep it as 'helper' inside the class.
-
-      // Given the request "stay in under the plural form, so Users",
-
-      // if they are same, we just put it inside the class as 'helper'.
-
-      buffer.writeln("extension ${className}Helper on $className {");
 
       _writeStaticHelper(buffer, className, name);
 
@@ -146,65 +138,60 @@ class ModelGenerator {
 
   void _writeFromMap(
     StringBuffer buffer,
-
     String className,
-
     List<dynamic> fields,
   ) {
     buffer.writeln("  static $className fromMap(Map<String, dynamic> map) {");
-
     buffer.writeln("    return $className(");
 
     for (final field in fields) {
       final fieldName = field['name'] as String;
-
-      final typeStr = field['type'] as String;
-
-      final dartType = _toDartType(field);
-
-      final isNullable = dartType.endsWith('?');
-
-      String mapping;
-
-      if (typeStr == 'autodate' || typeStr == 'date') {
-        if (isNullable) {
-          mapping =
-              "map['$fieldName'] != null ? DateTime.parse(map['$fieldName'] as String) : null";
-        } else {
-          mapping = "DateTime.parse(map['$fieldName'] as String)";
-        }
-      } else if (typeStr == 'number') {
-        if (isNullable) {
-          mapping =
-              "map['$fieldName'] != null ? (map['$fieldName'] as num).toDouble() : null";
-        } else {
-          mapping = "(map['$fieldName'] as num).toDouble()";
-        }
-      } else if (typeStr == 'bool') {
-        mapping = "map['$fieldName'] as bool";
-      } else if (typeStr == 'json') {
-        mapping = "map['$fieldName']";
-      } else if (typeStr == 'relation' ||
-          typeStr == 'file' ||
-          typeStr == 'select') {
-        final maxSelect = field['maxSelect'] ?? 1;
-
-        if (maxSelect == 1) {
-          mapping = "map['$fieldName'] as String${isNullable ? '?' : ''}";
-        } else {
-          mapping =
-              "(map['$fieldName'] as List<dynamic>).map((e) => e as String).toList()";
-        }
-      } else {
-        mapping = "map['$fieldName'] as String${isNullable ? '?' : ''}";
-      }
-
-      buffer.writeln("      $fieldName: $mapping,");
+      final expression = _getMappingExpression(field);
+      buffer.writeln("      $fieldName: $expression,");
     }
 
     buffer.writeln("    );");
     buffer.writeln("  }");
-    buffer.writeln();
+  }
+
+  String _getMappingExpression(Map<String, dynamic> field) {
+    final name = field['name'] as String;
+    final type = field['type'] as String;
+    final dartType = _toDartType(field);
+    final isNullable = dartType.endsWith('?');
+    final mapAccess = "map['$name']";
+
+    switch (type) {
+      case 'autodate':
+      case 'date':
+        return isNullable
+            ? "$mapAccess != null ? DateTime.parse($mapAccess as String) : null"
+            : "DateTime.parse($mapAccess as String)";
+
+      case 'number':
+        return isNullable
+            ? "$mapAccess != null ? ($mapAccess as num).toDouble() : null"
+            : "($mapAccess as num).toDouble()";
+
+      case 'bool':
+        return "$mapAccess as bool";
+
+      case 'json':
+        return mapAccess;
+
+      case 'relation':
+      case 'file':
+      case 'select':
+        final maxSelect = field['maxSelect'] ?? 1;
+        if (maxSelect <= 1) {
+          return "$mapAccess as String${isNullable ? '?' : ''}";
+        }
+        // Multi-select/file/relation
+        return "($mapAccess as List<dynamic>).map((e) => e as String).toList()";
+
+      default:
+        return "$mapAccess as String${isNullable ? '?' : ''}";
+    }
   }
 
   void _writeToMap(StringBuffer buffer, List<dynamic> fields) {
@@ -246,6 +233,9 @@ class ModelGenerator {
   ) {
     buffer.writeln("  $className copyWith({");
     for (final field in fields) {
+      // copy with on autodate does nothing so it might aswell not be available
+      if (field['type'] == 'autodate') continue;
+
       final fieldName = field['name'] as String;
       final dartType = _toDartType(field);
 
@@ -257,7 +247,11 @@ class ModelGenerator {
     buffer.writeln("    return $className(");
     for (final field in fields) {
       final fieldName = field['name'] as String;
-      buffer.writeln("      $fieldName: $fieldName ?? this.$fieldName,");
+      if (field['type'] == 'autodate') {
+        buffer.writeln("      $fieldName: $fieldName,");
+      } else {
+        buffer.writeln("      $fieldName: $fieldName ?? this.$fieldName,");
+      }
     }
     buffer.writeln("    );");
     buffer.writeln("  }");
@@ -321,6 +315,9 @@ class ModelGenerator {
     String className,
     String collectionName,
   ) {
+    buffer.writeln(
+      "  ///Get the [CollectionHelper] for the $collectionName collection",
+    );
     buffer.writeln(
       "  static CollectionHelper<$className> helper(PocketBase pb) =>",
     );
