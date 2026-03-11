@@ -44,52 +44,32 @@ class ModelGenerator {
 
   void _writeClass(StringBuffer buffer, Map<String, dynamic> collection) {
     final name = collection['name'] as String;
-
     final fields = collection['fields'] as List<dynamic>;
-
     final singularName = _singularize(name);
-
     final pluralName = _pluralize(name);
-
     final className = _toClassName(singularName);
-
     final helperClassName = _toClassName(pluralName);
 
     buffer.writeln("/// Model for the $name collection.");
-
     buffer.writeln("class $className implements PocketBaseRecord {");
-
     _writeFields(buffer, fields);
-
     _writeConstructor(buffer, className, fields);
-
     _writeFromMap(buffer, className, fields);
-
     _writeToMap(buffer, fields);
-
     _writeCopyWith(buffer, className, fields);
-
     _writeEquality(buffer, className, fields);
-
     _writeHashCode(buffer, fields);
-
     if (className == helperClassName) {
       _writeStaticHelper(buffer, className, name);
     }
-
     buffer.writeln("}");
-
     buffer.writeln();
 
     if (className != helperClassName) {
       buffer.writeln("/// Helper for the $name collection.");
-
       buffer.writeln("abstract final class $helperClassName {");
-
       _writeStaticHelper(buffer, className, name);
-
       buffer.writeln("}");
-
       buffer.writeln();
     }
   }
@@ -97,13 +77,11 @@ class ModelGenerator {
   void _writeFields(StringBuffer buffer, List<dynamic> fields) {
     for (final field in fields) {
       final fieldName = field['name'] as String;
-
       final dartType = _toDartType(field);
 
       if (fieldName == 'id') {
         buffer.writeln("  @override");
       }
-
       buffer.writeln("  final $dartType $fieldName;");
     }
 
@@ -112,16 +90,13 @@ class ModelGenerator {
 
   void _writeConstructor(
     StringBuffer buffer,
-
     String className,
-
     List<dynamic> fields,
   ) {
     buffer.writeln("  $className({");
 
     for (final field in fields) {
       final fieldName = field['name'] as String;
-
       final required = field['required'] == true || field['system'] == true;
 
       if (required) {
@@ -132,7 +107,6 @@ class ModelGenerator {
     }
 
     buffer.writeln("  });");
-
     buffer.writeln();
   }
 
@@ -200,11 +174,8 @@ class ModelGenerator {
 
     for (final field in fields) {
       final fieldName = field['name'] as String;
-
       final typeStr = field['type'] as String;
-
       final dartType = _toDartType(field);
-
       final isNullable = dartType.endsWith('?');
 
       String mapping;
@@ -218,10 +189,8 @@ class ModelGenerator {
       } else {
         mapping = fieldName;
       }
-
       buffer.writeln("    '$fieldName': $mapping,");
     }
-
     buffer.writeln("  };");
     buffer.writeln();
   }
@@ -288,14 +257,11 @@ class ModelGenerator {
 
   void _writeHashCode(StringBuffer buffer, List<dynamic> fields) {
     buffer.writeln("  @override");
-
     buffer.writeln("  int get hashCode => Object.hashAll([");
 
     for (final field in fields) {
       final fieldName = field['name'] as String;
-
       final dartType = _toDartType(field);
-
       final isList = dartType.startsWith('List<');
 
       if (isList) {
@@ -306,7 +272,6 @@ class ModelGenerator {
     }
 
     buffer.writeln("      ]);");
-
     buffer.writeln();
   }
 
