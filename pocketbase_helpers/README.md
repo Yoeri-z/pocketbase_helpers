@@ -238,12 +238,6 @@ final updated = await Users.api().update(
 
 // Delete
 await Users.api().delete('record_id');
-
-// Get or create
-final user = await Users.api().getOneOrCreate(
-  id: 'optional_id',
-  data: {'email': 'test@example.com'}
-);
 ```
 
 ---
@@ -262,7 +256,7 @@ final page = await Users.api().getList(
 final users = await Users.api().getFullList();
 
 // Optional fetch
-final user = await Users.api().getOneOrNull('record_id');
+final user = await Users.api().getOneOrNull();
 
 // Count
 final count = await Users.api().count();
@@ -271,6 +265,8 @@ final count = await Users.api().count();
 ---
 
 # Filtering & Sorting
+
+All query operations can be filtered like this:
 
 ```dart
 final users = await Users.api().getList(
