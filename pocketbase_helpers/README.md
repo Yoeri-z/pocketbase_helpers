@@ -1,9 +1,9 @@
 # pocketbase_helpers
 
-A Dart package that simplifies working with **PocketBase** using **type-safe models**.
+A Dart package that simplifies working with **[PocketBase](https://pocketbase.io)** using **type-safe models**.
 It provides helpers for collections, connection management, search utilities, file handling, and relation expansion.
 
-The package is modular you can use only the parts you need.
+The package is modular, you can use only the parts you need.
 
 ---
 
@@ -125,6 +125,30 @@ await users.delete(user.id);
 ```
 
 ---
+
+# Authenticating
+
+All methods related to authenticating are available through the AuthHelper, similarly to CollectionHelper it will be generated when using the cli.
+You can also create an `AuthHelper` yourself by calling its constructor.
+
+```dart
+import 'models.dart';
+
+void main() async {
+  PocketBaseConnection.open('http://127.0.0.1:8090');
+
+  final result = await Users.auth().withPassword('johndoe@gmail.com', 'verysecretpassword');
+
+  // status of the http request
+  print(result.status);
+  // authenticated record, only available if status was ok
+  print(result.record);
+
+  PocketBaseConnection.close();
+}
+```
+
+The `AuthHelper` has all the same methods for authenticating as the regular pocketbase sdk.
 
 # Connection Management
 

@@ -1,10 +1,10 @@
 /// Generator for PocketBase models from a pb_schema.json file.
 class ModelGenerator {
-  /// The jsonDecoded pocketbase schema
-  final List<dynamic> schema;
-
   /// Create a Model generator
   ModelGenerator({required this.schema});
+
+  /// The jsonDecoded pocketbase schema
+  final List<dynamic> schema;
 
   /// Generate the class defenitions from [schema] as a string.
   String generate() {
@@ -45,6 +45,7 @@ class ModelGenerator {
 
   void _writeClass(StringBuffer buffer, Map<String, dynamic> collection) {
     final name = collection['name'] as String;
+    final collectionType = collection['type'] as String;
     final fields = collection['fields'] as List<dynamic>;
 
     fields.removeWhere((f) => f['hidden'] == true);
@@ -64,7 +65,7 @@ class ModelGenerator {
     _writeEquality(buffer, className, fields);
     _writeHashCode(buffer, fields);
     if (className == helperClassName) {
-      _writeStaticHelper(buffer, className, name);
+      _writeStaticHelper(buffer, className, name, collectionType);
     }
     buffer.writeln("}");
     buffer.writeln();
@@ -72,7 +73,7 @@ class ModelGenerator {
     if (className != helperClassName) {
       buffer.writeln("/// Helper for the $name collection.");
       buffer.writeln("abstract final class $helperClassName {");
-      _writeStaticHelper(buffer, className, name);
+      _writeStaticHelper(buffer, className, name, collectionType);
       buffer.writeln("}");
       buffer.writeln();
     }
@@ -289,6 +290,7 @@ class ModelGenerator {
     StringBuffer buffer,
     String className,
     String collectionName,
+    String collectionType,
   ) {
     buffer.writeln(
       "  ///Get the [CollectionHelper] for the $collectionName collection",
@@ -298,6 +300,18 @@ class ModelGenerator {
     );
     buffer.writeln(
       "      CollectionHelper(pocketBaseInstance: pocketbaseInstance, collection: '$collectionName', mapper: $className.fromMap);",
+    );
+
+    if (collectionType != 'auth') return;
+
+    buffer.writeln(
+      "  ///Get the [AuthHelper] for the $collectionName collection",
+    );
+    buffer.writeln(
+      "  static AuthHelper<$className> auth([PocketBase? pocketbaseInstance]) =>",
+    );
+    buffer.writeln(
+      "      AuthHelper(pocketBaseInstance: pocketbaseInstance, collection: '$collectionName', mapper: $className.fromMap);",
     );
   }
 

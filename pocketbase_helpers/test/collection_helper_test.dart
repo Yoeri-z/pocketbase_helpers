@@ -159,9 +159,7 @@ void main() {
       totalPages: 1,
     );
 
-    when(
-      () => pb.filter(any(), any()),
-    ).thenReturn('verified search filter');
+    when(() => pb.filter(any(), any())).thenReturn('verified search filter');
 
     when(
       () => service.getList(
@@ -185,10 +183,7 @@ void main() {
     final items = List.generate(5, (_) => DummyRecord.randomModel());
 
     when(
-      () => service.getFullList(
-        batch: 500,
-        expand: any(named: 'expand'),
-      ),
+      () => service.getFullList(batch: 500, expand: any(named: 'expand')),
     ).thenAnswer((_) async => items.map((e) => e.$1).toList());
 
     final result = await helper.getFullList();
@@ -198,11 +193,7 @@ void main() {
 
   test('count returns total items from service', () async {
     when(
-      () => service.getList(
-        page: 1,
-        perPage: 1,
-        filter: any(named: 'filter'),
-      ),
+      () => service.getList(page: 1, perPage: 1, filter: any(named: 'filter')),
     ).thenAnswer((_) async => ResultList(totalItems: 42));
 
     final result = await helper.count();
@@ -218,7 +209,9 @@ void main() {
     final url = helper.buildFileUrl('recordId', 'file.png');
 
     expect(url.toString(), equals('http://localhost/file'));
-    verify(() => pb.buildURL('api/files/dummy/recordId/file.png', {})).called(1);
+    verify(
+      () => pb.buildURL('api/files/dummy/recordId/file.png', {}),
+    ).called(1);
   });
 
   test('create calls preCreationHook', () async {
@@ -311,41 +304,5 @@ void main() {
     expect(fileHelper.collection, equals('dummy'));
     expect(fileHelper.id, equals('id'));
     expect(fileHelper.field, equals('field'));
-  });
-
-  test('authWithPassword returns ok and mapped record on success', () async {
-    final (model, expected) = DummyRecord.randomModel();
-    final authData = RecordAuth(token: 'token', record: model);
-
-    when(
-      () => service.authWithPassword(
-        'test@example.com',
-        'password',
-        expand: any(named: 'expand'),
-      ),
-    ).thenAnswer((_) async => authData);
-
-    final (result, record) = await helper.authWithPassword(
-      'test@example.com',
-      'password',
-    );
-
-    expect(result, equals(AuthResult.ok));
-    expect(record?.id, equals(expected.id));
-  });
-
-  test('authWithPassword returns incorrectCredentials on 400 error', () async {
-    when(
-      () => service.authWithPassword(
-        any(),
-        any(),
-        expand: any(named: 'expand'),
-      ),
-    ).thenThrow(ClientException(statusCode: 400));
-
-    final (result, record) = await helper.authWithPassword('user', 'pass');
-
-    expect(result, equals(AuthResult.incorrectCredentials));
-    expect(record, isNull);
   });
 }

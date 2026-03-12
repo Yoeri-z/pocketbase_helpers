@@ -52,7 +52,7 @@ abstract interface class PocketBaseRecord {
 }
 
 /// Result of an authentication process.
-enum AuthResult {
+enum AuthStatus {
   ///The authentication was succesfull.
   ok,
 

@@ -103,6 +103,9 @@ abstract final class Users {
   ///Get the [CollectionHelper] for the users collection
   static CollectionHelper<User> api([PocketBase? pocketbaseInstance]) =>
       CollectionHelper(pocketBaseInstance: pocketbaseInstance, collection: 'users', mapper: User.fromMap);
+  ///Get the [AuthHelper] for the users collection
+  static AuthHelper<User> auth([PocketBase? pocketbaseInstance]) =>
+      AuthHelper(pocketBaseInstance: pocketbaseInstance, collection: 'users', mapper: User.fromMap);
 }
 
 
