@@ -8,6 +8,7 @@ void main() {
     final schema = [
       {
         'name': 't',
+        'type': 'base',
         'fields': [
           {
             'name': 'f',
@@ -226,6 +227,7 @@ void main() {
       final schema = [
         {
           'name': 't',
+          'type': 'base',
           'fields': [
             {'name': 'visible', 'type': 'text'},
             {'name': 'secret', 'type': 'text', 'hidden': true},
@@ -245,6 +247,7 @@ void main() {
       final schema = [
         {
           'name': 'mega_test',
+          'type': 'base',
           'fields': [
             {'name': 'id', 'type': 'text', 'required': true, 'system': true},
             {'name': 'number_opt', 'type': 'number', 'required': false},
