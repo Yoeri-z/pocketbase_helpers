@@ -206,20 +206,20 @@ class ModelGenerator {
         final parse = refer(
           'DateTime',
         ).property('parse').call([mapAccess.asA(refer('String'))]);
-        return field.isDartNullable
-            ? mapAccess.notEqualTo(literalNull).conditional(parse, literalNull)
-            : parse;
+        return field.isDartRequired
+            ? parse
+            : mapAccess.notEqualTo(literalNull).conditional(parse, literalNull);
 
       case 'number':
         final toDouble = mapAccess
             .asA(refer('num'))
             .property('toDouble')
             .call([]);
-        return field.isDartNullable
-            ? mapAccess
+        return field.isDartRequired
+            ? toDouble
+            : mapAccess
                   .notEqualTo(literalNull)
-                  .conditional(toDouble, literalNull)
-            : toDouble;
+                  .conditional(toDouble, literalNull);
 
       case 'bool':
         return mapAccess.asA(refer('bool'));
@@ -263,7 +263,7 @@ class ModelGenerator {
       if (field.type == 'autodate' || field.type == 'date') {
         map[field.name] = _generateDateToMapExpression(
           field.fieldName,
-          field.isDartNullable,
+          field.isDartRequired,
         );
       } else if (field.type == 'geoPoint') {
         map[field.name] = refer(field.fieldName).property('toMap').call([]);
@@ -282,10 +282,11 @@ class ModelGenerator {
     );
   }
 
-  Expression _generateDateToMapExpression(String fieldName, bool isNullable) {
-    if (isNullable) {
+  Expression _generateDateToMapExpression(String fieldName, bool isRequired) {
+    if (!isRequired) {
       return refer(fieldName).nullSafeProperty('toIso8601String').call([]);
     }
+
     return refer(fieldName).property('toIso8601String').call([]);
   }
 

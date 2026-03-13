@@ -54,26 +54,6 @@ void main() {
       expect(PocketBaseField({'type': 'text', 'maxSelect': 2}).isList, isFalse);
     });
 
-    test('isNullable logic', () {
-      expect(
-        PocketBaseField({
-          'type': 'text',
-          'required': false,
-          'system': false,
-        }).isDartNullable,
-        isTrue,
-      );
-      expect(
-        PocketBaseField({'type': 'text', 'required': true}).isDartNullable,
-        isFalse,
-      );
-      expect(
-        PocketBaseField({'type': 'text', 'system': true}).isDartNullable,
-        isFalse,
-      );
-      expect(PocketBaseField({'type': 'autodate'}).isDartNullable, isFalse);
-    });
-
     group('dartType', () {
       test('text types', () {
         expect(

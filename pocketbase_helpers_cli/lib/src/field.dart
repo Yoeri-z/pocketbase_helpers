@@ -14,48 +14,34 @@ class PocketBaseField {
   int get maxSelect => data['maxSelect'] ?? 1;
 
   bool get isDartRequired =>
-      required || system || isList || type == 'autodate' || type == 'bool';
+      required ||
+      system ||
+      isList ||
+      type == 'autodate' ||
+      type == 'bool' ||
+      type == 'password';
 
   bool get isList =>
       (type == 'relation' || type == 'file' || type == 'select') &&
       maxSelect > 1;
 
-  bool get isDartNullable =>
-      (!required && !system && type != 'autodate' && type != 'bool');
-
   String get fieldName => name.toCamelCase();
 
   String get dartType {
     if (isList) return 'List<String>';
-    final suffix = isDartNullable ? '?' : '';
+    final suffix = isDartRequired ? '?' : '';
 
-    switch (type) {
-      case 'text':
-      case 'email':
-      case 'url':
-      case 'editor':
-        return 'String$suffix';
-      case 'password':
-        return 'String';
-      case 'number':
-        return 'double$suffix';
-      case 'bool':
-        return 'bool$suffix';
-      case 'date':
-        return 'DateTime$suffix';
-      case 'autodate':
-        return 'DateTime';
-      case 'json':
-        return 'dynamic';
-      case 'relation':
-      case 'file':
-      case 'select':
-        if (maxSelect == 1) return 'String$suffix';
-        return 'List<String>';
-      case 'geoPoint':
-        return 'GeoPoint';
-      default:
-        return 'dynamic';
-    }
+    return switch (type) {
+      'text' || 'email' || 'url' || 'editor' || 'password' => 'String$suffix',
+      'number' => 'double$suffix',
+      'bool' => 'bool$suffix',
+      'date' || 'autodate' => 'DateTime$suffix',
+      'relation' ||
+      'file' ||
+      'select' => isList ? 'List<String>' : 'String$suffix',
+      'geoPoint' => 'GeoPoint',
+      //includes json
+      _ => 'dynamic',
+    };
   }
 }
