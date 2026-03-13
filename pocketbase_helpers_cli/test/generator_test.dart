@@ -1,13 +1,20 @@
-import 'package:analyzer/dart/analysis/results.dart';
-import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:change_case/change_case.dart';
+import 'package:code_builder/code_builder.dart';
 import 'package:pocketbase_helpers_cli/src/generator.dart';
 import 'package:test/test.dart';
+import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:analyzer/dart/analysis/results.dart';
 
 void main() {
-  String gen(String type, {bool required = false, int maxSelect = 1}) {
+  Library genLibrary(
+    String type, {
+    bool required = false,
+    int maxSelect = 1,
+    String? name,
+  }) {
     final schema = [
       {
-        'name': 't',
+        'name': name ?? 't',
         'type': 'base',
         'fields': [
           {
@@ -19,50 +26,91 @@ void main() {
         ],
       },
     ];
-    return ModelGenerator(schema: schema).generate();
+    return ModelGenerator(schema: schema).buildLibrary();
   }
 
-  void expectField({
-    required String output,
-    required String declaration,
+  String emit(Spec spec) {
+    final emitter = DartEmitter();
+    return spec.accept(emitter).toString();
+  }
+
+  void expectField(
+    Class cls, {
+    required String name,
+    required bool requiredConstructor,
+    required String type,
     required String fromMap,
     required String toMap,
     required String copyWithParam,
     required String copyWithAssign,
   }) {
-    expect(output, contains(declaration));
-    expect(output, contains(fromMap));
-    expect(output, contains(toMap));
-    expect(output, contains(copyWithParam));
-    expect(output, contains(copyWithAssign));
+    String normalize(String s) => s.replaceAll(RegExp(r'\s+'), '');
+
+    // Check Field Declaration
+    final field = cls.fields.firstWhere((f) => f.name == name);
+    expect(field.type?.symbol, type);
+    expect(field.modifier, FieldModifier.final$);
+
+    // Check constructor
+    final constructor = cls.constructors.first;
+    expect(constructor.requiredParameters, isEmpty);
+    expect(
+      constructor.optionalParameters.any(
+        (p) =>
+            p.required == requiredConstructor && p.name == name.toCamelCase(),
+      ),
+      isTrue,
+    );
+
+    // Check fromMap mapping
+    final fromMapMethod = cls.methods.firstWhere((m) => m.name == 'fromMap');
+    final fromMapSource = normalize(emit(fromMapMethod));
+    expect(fromMapSource, contains('f:${normalize(fromMap)}'));
+
+    // Check toMap mapping
+    final toMapMethod = cls.methods.firstWhere((m) => m.name == 'toMap');
+    final toMapSource = normalize(emit(toMapMethod));
+    expect(toMapSource, contains("'$name':${normalize(toMap)}"));
+
+    // Check copyWith
+    final copyWithMethod = cls.methods.firstWhere((m) => m.name == 'copyWith');
+    final copyWithSource = normalize(emit(copyWithMethod));
+    expect(copyWithSource, contains(normalize(copyWithParam)));
+    expect(copyWithSource, contains('f:${normalize(copyWithAssign)}'));
   }
 
   group('Plaintext', () {
     void testStringType(String type) {
       group(type, () {
         test('required', () {
-          final out = gen(type, required: true);
+          final lib = genLibrary(type, required: true);
+          final cls = lib.body.whereType<Class>().first;
 
           expectField(
-            output: out,
-            declaration: 'final String f;',
-            fromMap: "map['f'] as String",
-            toMap: "'f': f",
+            cls,
+            requiredConstructor: true,
+            name: 'f',
+            type: 'String',
+            fromMap: "(map['f'] as String)",
+            toMap: 'f',
             copyWithParam: 'String? f',
-            copyWithAssign: 'f: f ?? this.f',
+            copyWithAssign: 'f ?? this.f',
           );
         });
 
         test('optional', () {
-          final out = gen(type, required: false);
+          final lib = genLibrary(type, required: false);
+          final cls = lib.body.whereType<Class>().first;
 
           expectField(
-            output: out,
-            declaration: 'final String? f;',
-            fromMap: "map['f'] as String?",
-            toMap: "'f': f",
+            cls,
+            requiredConstructor: false,
+            name: 'f',
+            type: 'String?',
+            fromMap: "(map['f'] as String?)",
+            toMap: 'f',
             copyWithParam: 'String? f',
-            copyWithAssign: 'f: f ?? this.f',
+            copyWithAssign: 'f ?? this.f',
           );
         });
       });
@@ -76,71 +124,87 @@ void main() {
 
   group('number', () {
     test('required', () {
-      final out = gen('number', required: true);
+      final lib = genLibrary('number', required: true);
+      final cls = lib.body.whereType<Class>().first;
 
       expectField(
-        output: out,
-        declaration: 'final double f;',
+        cls,
+        requiredConstructor: true,
+        name: 'f',
+        type: 'double',
         fromMap: "(map['f'] as num).toDouble()",
-        toMap: "'f': f",
+        toMap: 'f',
         copyWithParam: 'double? f',
-        copyWithAssign: 'f: f ?? this.f',
+        copyWithAssign: 'f ?? this.f',
       );
     });
 
     test('optional', () {
-      final out = gen('number', required: false);
+      final lib = genLibrary('number', required: false);
+      final cls = lib.body.whereType<Class>().first;
 
       expectField(
-        output: out,
-        declaration: 'final double? f;',
+        cls,
+        requiredConstructor: false,
+        name: 'f',
+        type: 'double?',
         fromMap: "map['f'] != null ? (map['f'] as num).toDouble() : null",
-        toMap: "'f': f",
+        toMap: 'f',
         copyWithParam: 'double? f',
-        copyWithAssign: 'f: f ?? this.f',
+        copyWithAssign: 'f ?? this.f',
       );
     });
   });
 
   group('bool', () {
-    test('required', () {
-      final out = gen('bool', required: true);
+    test('always required', () {
+      final lib = genLibrary('bool', required: false);
+      final cls = lib.body.whereType<Class>().first;
 
       expectField(
-        output: out,
-        declaration: 'final bool f;',
-        fromMap: "map['f'] as bool",
-        toMap: "'f': f",
+        cls,
+        requiredConstructor: true,
+        name: 'f',
+        type: 'bool',
+        fromMap: "(map['f'] as bool)",
+        toMap: 'f',
         copyWithParam: 'bool? f',
-        copyWithAssign: 'f: f ?? this.f',
+        copyWithAssign: 'f ?? this.f',
       );
     });
   });
 
   group('date', () {
     test('required', () {
-      final out = gen('date', required: true);
+      final lib = genLibrary('date', required: true);
+      final cls = lib.body.whereType<Class>().first;
 
       expectField(
-        output: out,
-        declaration: 'final DateTime f;',
-        fromMap: "DateTime.parse(map['f'] as String)",
-        toMap: "'f': f.toIso8601String()",
+        cls,
+        requiredConstructor: true,
+        name: 'f',
+        type: 'DateTime',
+        fromMap: "DateTime.parse((map['f'] as String))",
+        toMap: 'f.toIso8601String()',
         copyWithParam: 'DateTime? f',
-        copyWithAssign: 'f: f ?? this.f',
+        copyWithAssign: 'f ?? this.f',
       );
     });
 
     test('optional', () {
-      final out = gen('date', required: false);
+      final lib = genLibrary('date', required: false);
+      final cls = lib.body.whereType<Class>().first;
 
       expectField(
-        output: out,
-        declaration: 'final DateTime? f;',
-        fromMap: "map['f'] != null ? DateTime.parse(map['f'] as String) : null",
-        toMap: "'f': f?.toIso8601String()",
+        cls,
+        requiredConstructor: false,
+        name: 'f',
+        type: 'DateTime?',
+        fromMap:
+            "map['f'] != null ? DateTime.parse((map['f'] as String)) : null",
+        toMap: 'f?.toIso8601String()',
         copyWithParam: 'DateTime? f',
-        copyWithAssign: 'f: f ?? this.f',
+        copyWithAssign: 'f ?? this.f',
       );
     });
   });
@@ -148,42 +212,51 @@ void main() {
   void testSelectable(String type) {
     group(type, () {
       test('single required', () {
-        final out = gen(type, required: true);
+        final lib = genLibrary(type, required: true);
+        final cls = lib.body.whereType<Class>().first;
 
         expectField(
-          output: out,
-          declaration: 'final String f;',
-          fromMap: "map['f'] as String",
-          toMap: "'f': f",
+          cls,
+          requiredConstructor: true,
+          name: 'f',
+          type: 'String',
+          fromMap: "(map['f'] as String)",
+          toMap: 'f',
           copyWithParam: 'String? f',
-          copyWithAssign: 'f: f ?? this.f',
+          copyWithAssign: 'f ?? this.f',
         );
       });
 
       test('single optional', () {
-        final out = gen(type);
+        final lib = genLibrary(type);
+        final cls = lib.body.whereType<Class>().first;
 
         expectField(
-          output: out,
-          declaration: 'final String? f;',
-          fromMap: "map['f'] as String?",
-          toMap: "'f': f",
+          cls,
+          requiredConstructor: false,
+          name: 'f',
+          type: 'String?',
+          fromMap: "(map['f'] as String?)",
+          toMap: 'f',
           copyWithParam: 'String? f',
-          copyWithAssign: 'f: f ?? this.f',
+          copyWithAssign: 'f ?? this.f',
         );
       });
 
       test('multi', () {
-        final out = gen(type, maxSelect: 2);
+        final lib = genLibrary(type, maxSelect: 2);
+        final cls = lib.body.whereType<Class>().first;
 
         expectField(
-          output: out,
-          declaration: 'final List<String> f;',
+          cls,
+          requiredConstructor: true,
+          name: 'f',
+          type: 'List<String>',
           fromMap:
-              "(map['f'] as List<dynamic>).map((e) => e as String).toList()",
-          toMap: "'f': f",
+              "(map['f'] as List<dynamic>).map((e) => (e as String)).toList()",
+          toMap: 'f',
           copyWithParam: 'List<String>? f',
-          copyWithAssign: 'f: f ?? this.f',
+          copyWithAssign: 'f ?? this.f',
         );
       });
     });
@@ -195,29 +268,36 @@ void main() {
 
   group('json', () {
     test('dynamic', () {
-      final out = gen('json');
+      final lib = genLibrary('json');
+      final cls = lib.body.whereType<Class>().first;
 
       expectField(
-        output: out,
-        declaration: 'final dynamic f;',
+        cls,
+        requiredConstructor: false,
+        name: 'f',
+        type: 'dynamic',
         fromMap: "map['f']",
-        toMap: "'f': f",
+        toMap: 'f',
         copyWithParam: 'dynamic f',
-        copyWithAssign: 'f: f ?? this.f',
+        copyWithAssign: 'f ?? this.f',
       );
     });
   });
+
   group('geoPoint', () {
     test('required', () {
-      final out = gen('geoPoint', required: true);
+      final lib = genLibrary('geoPoint', required: true);
+      final cls = lib.body.whereType<Class>().first;
 
       expectField(
-        output: out,
-        declaration: 'final GeoPoint f;',
+        cls,
+        requiredConstructor: true,
+        name: 'f',
+        type: 'GeoPoint',
         fromMap: "GeoPoint.fromMap(map['f'])",
-        toMap: "'f': f.toMap()",
+        toMap: 'f.toMap()',
         copyWithParam: 'GeoPoint? f',
-        copyWithAssign: 'f: f ?? this.f',
+        copyWithAssign: 'f ?? this.f',
       );
     });
   });
@@ -235,15 +315,16 @@ void main() {
         },
       ];
 
-      final out = ModelGenerator(schema: schema).generate();
+      final lib = ModelGenerator(schema: schema).buildLibrary();
+      final cls = lib.body.whereType<Class>().first;
 
-      expect(out, contains('final String? visible;'));
-      expect(out, isNot(contains('secret')));
+      expect(cls.fields.any((f) => f.name == 'visible'), isTrue);
+      expect(cls.fields.any((f) => f.name == 'secret'), isFalse);
     });
   });
+
   group('ModelGenerator static analysis', () {
     test('generated string is syntactically valid Dart', () {
-      /// it was already verified that each variant of field is valid so we just need to test primitively different types
       final schema = [
         {
           'name': 'mega_test',

@@ -1,3 +1,10 @@
+## 0.4.0
+
+- Changed internal implementation to use code_builder
+- Fixed edge cases and added more tests to catch edgecases
+- Added `PocketBaseCollection` and `PocketBaseField` classes to improve testability, readability and use of this package as a dependency.
+- Added collections static class to the generated library and also added collectionname static to each helper class.
+
 ## 0.3.0
 
 - Changed the generator to match the new [pocketbase_helpers] api.

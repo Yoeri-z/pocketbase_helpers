@@ -1,3 +1,10 @@
+import 'package:code_builder/code_builder.dart';
+import 'package:dart_style/dart_style.dart';
+
+import 'package:pocketbase_helpers_cli/src/field.dart';
+
+import 'collection.dart';
+
 /// Generator for PocketBase models from a pb_schema.json file.
 class ModelGenerator {
   /// Create a Model generator
@@ -6,157 +13,216 @@ class ModelGenerator {
   /// The jsonDecoded pocketbase schema
   final List<dynamic> schema;
 
-  /// Generate the class defenitions from [schema] as a string.
+  /// Generate the class definitions from [schema] as a string.
   String generate() {
-    final buffer = StringBuffer();
-
-    _writeHeader(buffer);
-
-    _writeImports(buffer);
-
-    for (final collection in schema) {
-      if (_isPrivateCollection(collection)) continue;
-      _writeClass(buffer, collection);
-    }
-
-    _writeFooter(buffer);
-
-    return buffer.toString();
-  }
-
-  bool _isPrivateCollection(dynamic collection) =>
-      (collection['name'] as String).startsWith('_');
-
-  void _writeHeader(StringBuffer buffer) {
-    buffer.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
-
-    buffer.writeln();
-  }
-
-  void _writeImports(StringBuffer buffer) {
-    buffer.writeln("import 'package:pocketbase/pocketbase.dart';");
-
-    buffer.writeln(
-      "import 'package:pocketbase_helpers/pocketbase_helpers.dart';",
+    final library = buildLibrary();
+    final emitter = DartEmitter(
+      allocator: Allocator.none,
+      orderDirectives: true,
+      useNullSafetySyntax: true,
     );
-
-    buffer.writeln();
+    final source = library.accept(emitter).toString();
+    final formatter = DartFormatter(languageVersion: .new(3, 0, 0));
+    return formatter.format(source);
   }
 
-  void _writeClass(StringBuffer buffer, Map<String, dynamic> collection) {
-    final name = collection['name'] as String;
-    final collectionType = collection['type'] as String;
-    final fields = collection['fields'] as List<dynamic>;
-
-    fields.removeWhere((f) => f['hidden'] == true);
-
-    final singularName = _singularize(name);
-    final pluralName = _pluralize(name);
-    final className = _toClassName(singularName);
-    final helperClassName = _toClassName(pluralName);
-
-    buffer.writeln("/// Model for the $name collection.");
-    buffer.writeln("class $className implements PocketBaseRecord {");
-    _writeFields(buffer, fields);
-    _writeConstructor(buffer, className, fields);
-    _writeFromMap(buffer, className, fields);
-    _writeToMap(buffer, fields);
-    _writeCopyWith(buffer, className, fields);
-    _writeEquality(buffer, className, fields);
-    _writeHashCode(buffer, fields);
-    if (className == helperClassName) {
-      _writeStaticHelper(buffer, className, name, collectionType);
-    }
-    buffer.writeln("}");
-    buffer.writeln();
-
-    if (className != helperClassName) {
-      buffer.writeln("/// Helper for the $name collection.");
-      buffer.writeln("abstract final class $helperClassName {");
-      _writeStaticHelper(buffer, className, name, collectionType);
-      buffer.writeln("}");
-      buffer.writeln();
-    }
+  /// Build the [Library] for the schema.
+  Library buildLibrary() {
+    return Library(
+      (l) => l
+        ..comments.add('GENERATED CODE - DO NOT MODIFY BY HAND')
+        ..directives.addAll([
+          Directive.import('package:pocketbase/pocketbase.dart'),
+          Directive.import(
+            'package:pocketbase_helpers/pocketbase_helpers.dart',
+          ),
+        ])
+        ..body.addAll(_generateLibraryBody()),
+    );
   }
 
-  void _writeFields(StringBuffer buffer, List<dynamic> fields) {
-    for (final field in fields) {
-      final fieldName = field['name'] as String;
-      final dartType = _toDartType(field);
+  Iterable<Spec> _generateLibraryBody() sync* {
+    bool hasLists = false;
+    final List<PocketBaseCollection> collections = [];
+    for (final collectionData in schema) {
+      final collection = PocketBaseCollection(collectionData);
 
-      if (fieldName == 'id') {
-        buffer.writeln("  @override");
+      if (collection.isPrivate) continue;
+
+      collections.add(collection);
+
+      final fields = collection.fields.where((f) => !f.hidden).toList();
+
+      if (fields.any((f) => f.isList)) {
+        hasLists = true;
       }
-      buffer.writeln("  final $dartType $fieldName;");
+
+      yield* _generateCollectionSpecs(collection, fields);
     }
 
-    buffer.writeln();
+    yield _generateStaticCollectionsClass(collections);
+
+    if (hasLists) {
+      yield _generateListEquals();
+    }
   }
 
-  void _writeConstructor(
-    StringBuffer buffer,
-    String className,
-    List<dynamic> fields,
+  Class _generateStaticCollectionsClass(
+    List<PocketBaseCollection> collections,
   ) {
-    buffer.writeln("  $className({");
+    return Class(
+      (c) => c
+        ..name = 'Collection'
+        ..docs.add(
+          '/// Static class containing all the string literals for your pocketbase collections.',
+        )
+        ..modifier = .final$
+        ..abstract = true
+        ..fields.addAll([
+          for (final collection in collections)
+            Field(
+              (f) => f
+                ..docs.add(
+                  '/// The name of the `${collection.name}` collection.',
+                )
+                ..name = collection.fieldName
+                ..static = true
+                ..modifier = .constant
+                ..type = refer('String')
+                ..assignment = literalString(collection.name).code,
+            ),
+        ]),
+    );
+  }
 
-    for (final field in fields) {
-      final fieldName = field['name'] as String;
-      final required =
-          field['required'] == true ||
-          field['system'] == true ||
-          field['type'] == 'autodate';
+  Iterable<Spec> _generateCollectionSpecs(
+    PocketBaseCollection collection,
+    List<PocketBaseField> fields,
+  ) sync* {
+    yield _generateModelClass(collection, fields);
 
-      if (required) {
-        buffer.writeln("    required this.$fieldName,");
-      } else {
-        buffer.writeln("    this.$fieldName,");
+    if (collection.className != collection.helperClassName) {
+      yield _generateHelperClass(collection);
+    }
+  }
+
+  Class _generateModelClass(
+    PocketBaseCollection collection,
+    List<PocketBaseField> fields,
+  ) {
+    return Class((c) {
+      c
+        ..name = collection.className
+        ..docs.add('/// Model for the `${collection.name}` collection.')
+        ..implements.add(refer('PocketBaseRecord'))
+        ..fields.addAll(fields.map(_generateField))
+        ..constructors.add(_generateConstructor(collection.className, fields))
+        ..methods.addAll([
+          _generateFromMap(collection.className, fields),
+          _generateToMap(fields),
+          _generateCopyWith(collection.className, fields),
+          _generateEquality(collection.className, fields),
+          _generateHashCodeGetter(fields),
+        ]);
+
+      if (collection.className == collection.helperClassName) {
+        c.fields.addAll(_generateStaticHelperFields(collection));
+        c.methods.addAll(_generateStaticHelperMethods(collection));
       }
-    }
-
-    buffer.writeln("  });");
-    buffer.writeln();
+    });
   }
 
-  void _writeFromMap(
-    StringBuffer buffer,
+  Class _generateHelperClass(PocketBaseCollection collection) {
+    return Class(
+      (c) => c
+        ..name = collection.helperClassName
+        ..docs.add('/// Helper for the `${collection.name}` collection.')
+        ..abstract = true
+        ..modifier = .final$
+        ..fields.addAll(_generateStaticHelperFields(collection))
+        ..methods.addAll(_generateStaticHelperMethods(collection)),
+    );
+  }
+
+  Field _generateField(PocketBaseField field) {
+    return Field(
+      (f) => f
+        ..name = field.fieldName
+        ..modifier = .final$
+        ..type = refer(field.dartType)
+        ..annotations.addAll([if (field.fieldName == 'id') refer('override')]),
+    );
+  }
+
+  Constructor _generateConstructor(
     String className,
-    List<dynamic> fields,
+    List<PocketBaseField> fields,
   ) {
-    buffer.writeln("  static $className fromMap(Map<String, dynamic> map) {");
-    buffer.writeln("    return $className(");
-
-    for (final field in fields) {
-      final fieldName = field['name'] as String;
-      final expression = _getMappingExpression(field);
-      buffer.writeln("      $fieldName: $expression,");
-    }
-
-    buffer.writeln("    );");
-    buffer.writeln("  }");
+    return Constructor(
+      (c) => c
+        ..optionalParameters.addAll(
+          fields.map((field) {
+            return Parameter(
+              (p) => p
+                ..name = field.fieldName
+                ..toThis = true
+                ..named = true
+                ..required = field.isDartRequired,
+            );
+          }),
+        ),
+    );
   }
 
-  String _getMappingExpression(Map<String, dynamic> field) {
-    final name = field['name'] as String;
-    final type = field['type'] as String;
-    final dartType = _toDartType(field);
-    final isNullable = dartType.endsWith('?');
-    final mapAccess = "map['$name']";
+  Method _generateFromMap(String className, List<PocketBaseField> fields) {
+    return Method(
+      (m) => m
+        ..name = 'fromMap'
+        ..static = true
+        ..returns = refer(className)
+        ..requiredParameters.add(
+          Parameter(
+            (p) => p
+              ..name = 'map'
+              ..type = refer('Map<String, dynamic>'),
+          ),
+        )
+        ..body = refer(className)
+            .newInstance([], {
+              for (final field in fields)
+                field.fieldName: _getMappingExpression(field),
+            })
+            .returned
+            .statement,
+    );
+  }
 
-    switch (type) {
+  Expression _getMappingExpression(PocketBaseField field) {
+    final mapAccess = refer('map').index(literalString(field.name));
+
+    switch (field.type) {
       case 'autodate':
       case 'date':
-        return isNullable
-            ? "$mapAccess != null ? DateTime.parse($mapAccess as String) : null"
-            : "DateTime.parse($mapAccess as String)";
+        final parse = refer(
+          'DateTime',
+        ).property('parse').call([mapAccess.asA(refer('String'))]);
+        return field.isDartNullable
+            ? mapAccess.notEqualTo(literalNull).conditional(parse, literalNull)
+            : parse;
 
       case 'number':
-        return isNullable
-            ? "$mapAccess != null ? ($mapAccess as num).toDouble() : null"
-            : "($mapAccess as num).toDouble()";
+        final toDouble = mapAccess
+            .asA(refer('num'))
+            .property('toDouble')
+            .call([]);
+        return field.isDartNullable
+            ? mapAccess
+                  .notEqualTo(literalNull)
+                  .conditional(toDouble, literalNull)
+            : toDouble;
 
       case 'bool':
-        return "$mapAccess as bool";
+        return mapAccess.asA(refer('bool'));
 
       case 'json':
         return mapAccess;
@@ -164,238 +230,257 @@ class ModelGenerator {
       case 'relation':
       case 'file':
       case 'select':
-        final maxSelect = field['maxSelect'] ?? 1;
-        if (maxSelect <= 1) {
-          return "$mapAccess as String${isNullable ? '?' : ''}";
+        if (field.maxSelect <= 1) {
+          return mapAccess.asA(refer(field.dartType));
         }
-        // Multi-select/file/relation
-        return "($mapAccess as List<dynamic>).map((e) => e as String).toList()";
+        return _generateMultiSelectMapping(mapAccess);
       case 'geoPoint':
-        return "GeoPoint.fromMap($mapAccess)";
+        return refer('GeoPoint').property('fromMap').call([mapAccess]);
       default:
-        return "$mapAccess as String${isNullable ? '?' : ''}";
+        return mapAccess.asA(refer(field.dartType));
     }
   }
 
-  void _writeToMap(StringBuffer buffer, List<dynamic> fields) {
-    buffer.writeln("  @override");
-    buffer.writeln("  Map<String, dynamic> toMap() => {");
-
-    for (final field in fields) {
-      final fieldName = field['name'] as String;
-      final typeStr = field['type'] as String;
-      final dartType = _toDartType(field);
-      final isNullable = dartType.endsWith('?');
-
-      String mapping;
-
-      if (typeStr == 'autodate' || typeStr == 'date') {
-        if (isNullable) {
-          mapping = "$fieldName?.toIso8601String()";
-        } else {
-          mapping = "$fieldName.toIso8601String()";
-        }
-      } else if (typeStr == 'geoPoint') {
-        mapping = "$fieldName.toMap()";
-      } else {
-        mapping = fieldName;
-      }
-      buffer.writeln("    '$fieldName': $mapping,");
-    }
-    buffer.writeln("  };");
-    buffer.writeln();
+  Expression _generateMultiSelectMapping(Expression mapAccess) {
+    return mapAccess
+        .asA(refer('List<dynamic>'))
+        .property('map')
+        .call([
+          Method(
+            (m) => m
+              ..requiredParameters.add(Parameter((p) => p..name = 'e'))
+              ..lambda = true
+              ..body = refer('e').asA(refer('String')).code,
+          ).closure,
+        ])
+        .property('toList')
+        .call([]);
   }
 
-  void _writeCopyWith(
-    StringBuffer buffer,
-    String className,
-    List<dynamic> fields,
-  ) {
-    buffer.writeln("  $className copyWith({");
+  Method _generateToMap(List<PocketBaseField> fields) {
+    final map = <String, Expression>{};
     for (final field in fields) {
-      // copy with on autodate does nothing so it might aswell not be available
-      if (field['type'] == 'autodate') continue;
-
-      final fieldName = field['name'] as String;
-      final dartType = _toDartType(field);
-
-      // Ensure the parameter is nullable even if the field isn't
-      final paramType = dartType.endsWith('?') ? dartType : '$dartType?';
-      buffer.writeln("    $paramType $fieldName,");
-    }
-    buffer.writeln("  }) {");
-    buffer.writeln("    return $className(");
-    for (final field in fields) {
-      final fieldName = field['name'] as String;
-      if (field['type'] == 'autodate') {
-        buffer.writeln("      $fieldName: $fieldName,");
+      if (field.type == 'autodate' || field.type == 'date') {
+        map[field.name] = _generateDateToMapExpression(
+          field.fieldName,
+          field.isDartNullable,
+        );
+      } else if (field.type == 'geoPoint') {
+        map[field.name] = refer(field.fieldName).property('toMap').call([]);
       } else {
-        buffer.writeln("      $fieldName: $fieldName ?? this.$fieldName,");
+        map[field.name] = refer(field.fieldName);
       }
     }
-    buffer.writeln("    );");
-    buffer.writeln("  }");
-    buffer.writeln();
+
+    return Method(
+      (m) => m
+        ..name = 'toMap'
+        ..annotations.add(refer('override'))
+        ..returns = refer('Map<String, dynamic>')
+        ..lambda = true
+        ..body = literalMap(map).code,
+    );
   }
 
-  void _writeEquality(
-    StringBuffer buffer,
-    String className,
-    List<dynamic> fields,
-  ) {
-    buffer.writeln("  @override");
-    buffer.writeln("  bool operator ==(Object other) =>");
-    buffer.writeln("      identical(this, other) ||");
-    buffer.writeln("      other is $className &&");
-    buffer.writeln("          runtimeType == other.runtimeType &&");
-    for (var i = 0; i < fields.length; i++) {
-      final field = fields[i];
-      final fieldName = field['name'] as String;
-      final dartType = _toDartType(field);
-      final isList = dartType.startsWith('List<');
-      final suffix = (i == fields.length - 1) ? ";" : " &&";
-      if (isList) {
-        buffer.writeln(
-          "          _listEquals($fieldName, other.$fieldName)$suffix",
+  Expression _generateDateToMapExpression(String fieldName, bool isNullable) {
+    if (isNullable) {
+      return refer(fieldName).nullSafeProperty('toIso8601String').call([]);
+    }
+    return refer(fieldName).property('toIso8601String').call([]);
+  }
+
+  Method _generateCopyWith(String className, List<PocketBaseField> fields) {
+    return Method(
+      (m) => m
+        ..name = 'copyWith'
+        ..returns = refer(className)
+        ..optionalParameters.addAll(
+          fields.where((f) => f.type != 'autodate').map((field) {
+            final paramType =
+                (field.dartType == 'dynamic' || field.dartType.endsWith('?'))
+                ? field.dartType
+                : '${field.dartType}?';
+            return Parameter(
+              (p) => p
+                ..name = field.fieldName
+                ..type = refer(paramType)
+                ..named = true,
+            );
+          }),
+        )
+        ..body = refer(className)
+            .newInstance([], {
+              for (final field in fields)
+                field.fieldName: field.type == 'autodate'
+                    ? refer(field.fieldName)
+                    : refer(
+                        field.fieldName,
+                      ).ifNullThen(refer('this').property(field.fieldName)),
+            })
+            .returned
+            .statement,
+    );
+  }
+
+  Method _generateEquality(String className, List<PocketBaseField> fields) {
+    final expressions = <Expression>[
+      refer('other').isA(refer(className)),
+      refer('runtimeType').equalTo(refer('other').property('runtimeType')),
+    ];
+
+    for (final field in fields) {
+      if (field.isList) {
+        expressions.add(
+          refer('_listEquals').call([
+            refer(field.fieldName),
+            refer('other').property(field.fieldName),
+          ]),
         );
       } else {
-        buffer.writeln("          $fieldName == other.$fieldName$suffix");
+        expressions.add(
+          refer(
+            field.fieldName,
+          ).equalTo(refer('other').property(field.fieldName)),
+        );
       }
     }
 
-    buffer.writeln();
+    return Method(
+      (m) => m
+        ..name = 'operator =='
+        ..annotations.add(refer('override'))
+        ..returns = refer('bool')
+        ..requiredParameters.add(
+          Parameter(
+            (p) => p
+              ..name = 'other'
+              ..type = refer('Object'),
+          ),
+        )
+        ..body = refer('identical')
+            .call([refer('this'), refer('other')])
+            .or(expressions.reduce((a, b) => a.and(b)))
+            .code,
+    );
   }
 
-  void _writeHashCode(StringBuffer buffer, List<dynamic> fields) {
-    buffer.writeln("  @override");
-    buffer.writeln("  int get hashCode => Object.hashAll([");
-
-    for (final field in fields) {
-      final fieldName = field['name'] as String;
-      final dartType = _toDartType(field);
-      final isList = dartType.startsWith('List<');
-
-      if (isList) {
-        buffer.writeln("        Object.hashAll($fieldName),");
-      } else {
-        buffer.writeln("        $fieldName,");
+  Method _generateHashCodeGetter(List<PocketBaseField> fields) {
+    final hashValues = fields.map((field) {
+      if (field.isList) {
+        return refer(
+          'Object',
+        ).property('hashAll').call([refer(field.fieldName)]);
       }
+      return refer(field.fieldName);
+    }).toList();
+
+    return Method(
+      (m) => m
+        ..name = 'hashCode'
+        ..type = MethodType.getter
+        ..annotations.add(refer('override'))
+        ..returns = refer('int')
+        ..body = refer(
+          'Object',
+        ).property('hashAll').call([literalList(hashValues)]).code,
+    );
+  }
+
+  Iterable<Method> _generateStaticHelperMethods(
+    PocketBaseCollection collection,
+  ) sync* {
+    yield Method(
+      (m) => m
+        ..name = 'api'
+        ..static = true
+        ..docs.add(
+          '///Gets the [CollectionHelper] for the `${collection.name}` collection',
+        )
+        ..returns = refer('CollectionHelper<${collection.className}>')
+        ..optionalParameters.add(
+          Parameter(
+            (p) => p
+              ..name = 'pocketbaseInstance'
+              ..type = refer('PocketBase?'),
+          ),
+        )
+        ..lambda = true
+        ..body = refer('CollectionHelper').newInstance([], {
+          'pocketBaseInstance': refer('pocketbaseInstance'),
+          'collection': literalString(collection.name),
+          'mapper': refer(collection.className).property('fromMap'),
+        }).code,
+    );
+
+    if (collection.type == 'auth') {
+      yield Method(
+        (m) => m
+          ..name = 'auth'
+          ..static = true
+          ..docs.add(
+            '///Gets the [AuthHelper] for the `${collection.name}` collection',
+          )
+          ..returns = refer('AuthHelper<${collection.className}>')
+          ..optionalParameters.add(
+            Parameter(
+              (p) => p
+                ..name = 'pocketbaseInstance'
+                ..type = refer('PocketBase?'),
+            ),
+          )
+          ..lambda = true
+          ..body = refer('AuthHelper').newInstance([], {
+            'pocketBaseInstance': refer('pocketbaseInstance'),
+            'collection': literalString(collection.name),
+            'mapper': refer(collection.className).property('fromMap'),
+          }).code,
+      );
     }
-
-    buffer.writeln("      ]);");
-    buffer.writeln();
   }
 
-  void _writeStaticHelper(
-    StringBuffer buffer,
-    String className,
-    String collectionName,
-    String collectionType,
-  ) {
-    buffer.writeln(
-      "  ///Get the [CollectionHelper] for the $collectionName collection",
-    );
-    buffer.writeln(
-      "  static CollectionHelper<$className> api([PocketBase? pocketbaseInstance]) =>",
-    );
-    buffer.writeln(
-      "      CollectionHelper(pocketBaseInstance: pocketbaseInstance, collection: '$collectionName', mapper: $className.fromMap);",
-    );
-
-    if (collectionType != 'auth') return;
-
-    buffer.writeln(
-      "  ///Get the [AuthHelper] for the $collectionName collection",
-    );
-    buffer.writeln(
-      "  static AuthHelper<$className> auth([PocketBase? pocketbaseInstance]) =>",
-    );
-    buffer.writeln(
-      "      AuthHelper(pocketBaseInstance: pocketbaseInstance, collection: '$collectionName', mapper: $className.fromMap);",
+  Iterable<Field> _generateStaticHelperFields(
+    PocketBaseCollection collection,
+  ) sync* {
+    yield Field(
+      (f) => f
+        ..docs.add('/// The name of this collection in PocketBase.')
+        ..name = 'collectionName'
+        ..static = true
+        ..modifier = .constant
+        ..type = refer('String')
+        ..assignment = literalString(collection.name).code,
     );
   }
 
-  void _writeFooter(StringBuffer buffer) {
-    buffer.writeln();
-
-    final hasLists = schema.any(
-      (collection) => (collection['fields'] as List).any(
-        (field) => _toDartType(field).startsWith('List<'),
-      ),
+  Spec _generateListEquals() {
+    return Method(
+      (m) => m
+        ..name = '_listEquals'
+        ..types.add(refer('T'))
+        ..returns = refer('bool')
+        ..requiredParameters.addAll([
+          Parameter(
+            (p) => p
+              ..name = 'a'
+              ..type = refer('List<T>?'),
+          ),
+          Parameter(
+            (p) => p
+              ..name = 'b'
+              ..type = refer('List<T>?'),
+          ),
+        ])
+        ..body = Block(
+          (b) => b.statements.addAll([
+            const Code('if (a == null) return b == null;'),
+            const Code('if (b == null || a.length != b.length) return false;'),
+            const Code('if (identical(a, b)) return true;'),
+            const Code(
+              'for (int index = 0; index < a.length; index++) { if (a[index] != b[index]) return false; }',
+            ),
+            const Code('return true;'),
+          ]),
+        ),
     );
-
-    if (hasLists) {
-      buffer.writeln("bool _listEquals<T>(List<T>? a, List<T>? b) {");
-      buffer.writeln("  if (a == null) return b == null;");
-      buffer.writeln("  if (b == null || a.length != b.length) return false;");
-      buffer.writeln("  if (identical(a, b)) return true;");
-      buffer.writeln("  for (int index = 0; index < a.length; index++) {");
-      buffer.writeln("    if (a[index] != b[index]) return false;");
-      buffer.writeln("  }");
-      buffer.writeln("  return true;");
-      buffer.writeln("}");
-    }
-  }
-
-  String _singularize(String name) {
-    if (name.endsWith('ies')) return '${name.substring(0, name.length - 3)}y';
-    if (name.endsWith('s') && !name.endsWith('ss')) {
-      return name.substring(0, name.length - 1);
-    }
-
-    return name;
-  }
-
-  String _pluralize(String name) {
-    if (name.endsWith('s')) return name;
-    if (name.endsWith('y')) return '${name.substring(0, name.length - 1)}ies';
-
-    return '${name}s';
-  }
-
-  String _toClassName(String name) {
-    if (name.startsWith('_')) name = name.substring(1);
-    return name
-        .split('_')
-        .map((s) => s.isEmpty ? '' : s[0].toUpperCase() + s.substring(1))
-        .join('');
-  }
-
-  String _toDartType(dynamic field) {
-    final type = field['type'] as String;
-    final required = field['required'] == true || field['system'] == true;
-    final suffix = required ? '' : '?';
-
-    switch (type) {
-      case 'text':
-      case 'email':
-      case 'url':
-      case 'editor':
-        return 'String$suffix';
-      case 'password':
-        return 'String';
-      case 'number':
-        return 'double$suffix';
-      case 'bool':
-        return 'bool$suffix';
-      case 'date':
-        return 'DateTime$suffix';
-      case 'autodate':
-        return 'DateTime';
-      case 'json':
-        return 'dynamic';
-      case 'relation':
-      case 'file':
-      case 'select':
-        final maxSelect = field['maxSelect'] ?? 1;
-
-        if (maxSelect == 1) return 'String$suffix';
-
-        return 'List<String>';
-      case 'geoPoint':
-        return 'GeoPoint';
-      default:
-        return 'dynamic';
-    }
   }
 }
