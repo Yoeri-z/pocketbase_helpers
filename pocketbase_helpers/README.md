@@ -191,8 +191,7 @@ PocketBaseConnection.defaultAddress;
 Hooks allow automatically modifying data before create/update.
 
 ```dart
-PocketBaseConnection.open(
-  'http://127.0.0.1:8090',
+PocketBaseConnection.setHooks(
   preCreationHook: (collection, pb, map) {
 
     if (pb.authStore.isValid) {
@@ -211,6 +210,15 @@ PocketBaseConnection.open(
 
     return map;
   },
+);
+```
+
+to undo settings a hook simply set the hook to a function that immediately returns map.
+
+```dart
+PocketBaseConnection.setHooks(
+  preCreationHook: (_, _, map) => map,
+  preUpdateHook: (_, _, map) => map,
 );
 ```
 
