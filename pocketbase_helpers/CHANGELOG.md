@@ -1,3 +1,7 @@
+## 0.7.0
+
+- Removed `fields` and `additionalExpansions` parameters from all `CollectionHelper` and `AuthHelper` methods to enforce mapping consistency.
+
 ## 0.6.0
 
 - Added PocketBaseConnection singleton to manage the connection to pocketbase.

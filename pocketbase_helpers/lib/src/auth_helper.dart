@@ -17,8 +17,10 @@ class AuthHelper<T extends Object> {
     required this.collection,
     required RecordMapper<T> mapper,
     PocketBase? pocketBaseInstance,
+    List<String>? fields,
     Map<String, String>? expansions,
   }) : _pb = pocketBaseInstance,
+       _fields = fields,
        _mapper = mapper,
        _expansions = expansions;
 
@@ -27,11 +29,10 @@ class AuthHelper<T extends Object> {
   final RecordMapper<T> _mapper;
   final Map<String, String>? _expansions;
 
+  final List<String>? _fields;
+
   /// The collection this helper is operating on.
   final String collection;
-
-  Map<String, String> _combineExp(Map<String, String>? additionalExpansions) =>
-      (_expansions ?? {})..addAll(additionalExpansions ?? const {});
 
   /// Authenticate a record with email/username and password.
   Future<RecordAuthResult<T>> withPassword(
@@ -42,14 +43,13 @@ class AuthHelper<T extends Object> {
     Map<String, String>? headers,
   }) async {
     try {
-      final expansions = _combineExp(additionalExpansions);
-
       final result = await pb
           .collection(collection)
           .authWithPassword(
             email,
             password,
-            expand: HelperUtils.buildExpansionString(expansions),
+            fields: _fields?.join(','),
+            expand: HelperUtils.buildExpansionString(_expansions),
             query: query ?? const {},
             headers: headers ?? const {},
           );
@@ -58,7 +58,7 @@ class AuthHelper<T extends Object> {
         status: AuthStatus.ok,
         record: _mapper(
           HelperUtils.mergeExpansions(
-            expansions,
+            _expansions,
             result.record.toJson(),
           ).clean(),
         ),
@@ -72,19 +72,17 @@ class AuthHelper<T extends Object> {
   Future<RecordAuthResult<T>> withOAuth2(
     String provider, {
     required void Function(Uri url) urlCallback,
-    Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
     try {
-      final expansions = _combineExp(additionalExpansions);
-
       final result = await pb
           .collection(collection)
           .authWithOAuth2(
             provider,
             urlCallback,
-            expand: HelperUtils.buildExpansionString(expansions),
+            fields: _fields?.join(','),
+            expand: HelperUtils.buildExpansionString(_expansions),
             query: query ?? const {},
             headers: headers ?? const {},
           );
@@ -93,7 +91,7 @@ class AuthHelper<T extends Object> {
         status: AuthStatus.ok,
         record: _mapper(
           HelperUtils.mergeExpansions(
-            expansions,
+            _expansions,
             result.record.toJson(),
           ).clean(),
         ),
@@ -107,18 +105,17 @@ class AuthHelper<T extends Object> {
   Future<RecordAuthResult<T>> withOTP(
     String otpId,
     String code, {
-    Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
     try {
-      final expansions = _combineExp(additionalExpansions);
       final result = await pb
           .collection(collection)
           .authWithOTP(
             otpId,
             code,
-            expand: HelperUtils.buildExpansionString(expansions),
+            fields: _fields?.join(','),
+            expand: HelperUtils.buildExpansionString(_expansions),
             query: query ?? const {},
             headers: headers ?? const {},
           );
@@ -127,7 +124,7 @@ class AuthHelper<T extends Object> {
         status: AuthStatus.ok,
         record: _mapper(
           HelperUtils.mergeExpansions(
-            expansions,
+            _expansions,
             result.record.toJson(),
           ).clean(),
         ),
