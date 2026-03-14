@@ -1,6 +1,7 @@
 ## 0.7.0
 
 - Removed `fields` and `additionalExpansions` parameters from all `CollectionHelper` and `AuthHelper` methods to enforce mapping consistency.
+- Moved build file url from `BaseHelper` and `CollectionHelper` into `HelperUtils`, this means the `Helpers` really only serve to access the pocketbase api.
 
 ## 0.6.0
 

@@ -201,19 +201,6 @@ void main() {
     expect(result, equals(42));
   });
 
-  test('buildFileUrl constructs correct URL', () {
-    when(
-      () => pb.buildURL(any(), any()),
-    ).thenReturn(Uri.parse('http://localhost/file'));
-
-    final url = helper.buildFileUrl('recordId', 'file.png');
-
-    expect(url.toString(), equals('http://localhost/file'));
-    verify(
-      () => pb.buildURL('api/files/dummy/recordId/file.png', {}),
-    ).called(1);
-  });
-
   test('create calls preCreationHook', () async {
     final (createdModel, expectedRecord) = DummyRecord.randomModel();
     var hookCalled = false;
@@ -296,13 +283,5 @@ void main() {
     for (var (index, result) in results.indexed) {
       expect(result.equals(dummyRecords[index].$2), isTrue);
     }
-  });
-
-  test('fileField returns a FileHelper instance', () {
-    final fileHelper = helper.fileField('id', 'field');
-    expect(fileHelper, isA<FileHelper<DummyRecord>>());
-    expect(fileHelper.collection, equals('dummy'));
-    expect(fileHelper.id, equals('id'));
-    expect(fileHelper.field, equals('field'));
   });
 }

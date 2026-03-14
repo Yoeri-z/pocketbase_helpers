@@ -1,20 +1,37 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 import 'package:test/test.dart';
 
+import 'setup.dart';
+
 void main() {
+  test('buildFileUrl constructs correct URL', () {
+    final pb = MockPocketBase();
+
+    when(
+      () => pb.buildURL(any(), any()),
+    ).thenReturn(Uri.parse('http://localhost/file'));
+
+    final url = HelperUtils.buildFileUrl(
+      'dummy',
+      'recordId',
+      'file.png',
+      pocketBaseInstance: pb,
+    );
+
+    expect(url.toString(), equals('http://localhost/file'));
+    verify(
+      () => pb.buildURL('api/files/dummy/recordId/file.png', {}),
+    ).called(1);
+  });
   test('cleanMap removes empty strings and recurses into nested maps', () {
     final input = <String, dynamic>{
       'a': '',
       'b': 'value',
-      'c': {
-        'd': '',
-        'e': 'nested',
-      },
-      'f': {
-        'g': '',
-      },
+      'c': {'d': '', 'e': 'nested'},
+      'f': {'g': ''},
     };
 
     final expected = {
@@ -52,7 +69,10 @@ void main() {
   });
 
   test('buildExpansionString joins keys with commas', () {
-    expect(HelperUtils.buildExpansionString({'a': 'b', 'c': 'd'}), equals('a,c'));
+    expect(
+      HelperUtils.buildExpansionString({'a': 'b', 'c': 'd'}),
+      equals('a,c'),
+    );
     expect(HelperUtils.buildExpansionString({}), isNull);
     expect(HelperUtils.buildExpansionString(null), isNull);
   });
@@ -69,7 +89,12 @@ void main() {
 
     final result = HelperUtils.mergeExpansions(expansions, map);
     expect(result['user'], equals({'name': 'John'}));
-    expect(result['expand'], equals({'user_id': {'name': 'John'}}));
+    expect(
+      result['expand'],
+      equals({
+        'user_id': {'name': 'John'},
+      }),
+    );
   });
 
   test('getNameFromUrl extracts last segment', () {
@@ -84,7 +109,10 @@ void main() {
       'http://localhost/file1.png',
       'http://localhost/path/file2.jpg',
     ];
-    expect(HelperUtils.getNamesFromUrls(urls), equals(['file1.png', 'file2.jpg']));
+    expect(
+      HelperUtils.getNamesFromUrls(urls),
+      equals(['file1.png', 'file2.jpg']),
+    );
   });
 
   test('pathsToFiles reads files into Map<String, Uint8List>', () {
@@ -101,7 +129,10 @@ void main() {
   });
 
   test('buildSortString constructs sort string', () {
-    expect(HelperUtils.buildSortString(sortField: 'created'), equals('+created'));
+    expect(
+      HelperUtils.buildSortString(sortField: 'created'),
+      equals('+created'),
+    );
     expect(
       HelperUtils.buildSortString(sortField: 'created', ascending: false),
       equals('-created'),

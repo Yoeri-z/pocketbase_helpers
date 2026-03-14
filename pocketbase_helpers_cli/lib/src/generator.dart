@@ -116,9 +116,12 @@ class ModelGenerator {
         ..docs.add('/// Model for the `${collection.name}` collection.')
         ..implements.add(refer('PocketBaseRecord'))
         ..fields.addAll(fields.map(_generateField))
-        ..constructors.add(_generateConstructor(collection.className, fields))
-        ..methods.addAll([
+        ..constructors.addAll([
+          _generateConstructor(collection.className, fields),
           _generateFromMap(collection.className, fields),
+        ])
+        ..methods.addAll([
+          _generateGetFile(collection),
           _generateToMap(fields),
           _generateCopyWith(collection.className, fields),
           _generateEquality(collection.className, fields),
@@ -174,12 +177,11 @@ class ModelGenerator {
     );
   }
 
-  Method _generateFromMap(String className, List<PocketBaseField> fields) {
-    return Method(
+  Constructor _generateFromMap(String className, List<PocketBaseField> fields) {
+    return Constructor(
       (m) => m
         ..name = 'fromMap'
-        ..static = true
-        ..returns = refer(className)
+        ..factory = true
         ..requiredParameters.add(
           Parameter(
             (p) => p
@@ -279,6 +281,41 @@ class ModelGenerator {
         ..returns = refer('Map<String, dynamic>')
         ..lambda = true
         ..body = literalMap(map).code,
+    );
+  }
+
+  Method _generateGetFile(PocketBaseCollection collection) {
+    return Method(
+      (m) => m
+        ..docs.add(
+          '/// Get a file attached to this record with the name [fileName]',
+        )
+        ..returns = refer('Uri')
+        ..name = 'getFileUrl'
+        ..optionalParameters.addAll([
+          Parameter(
+            (p) => p
+              ..name = 'fileName'
+              ..type = refer('String')
+              ..named = false
+              ..required = true,
+          ),
+          Parameter(
+            (p) => p
+              ..name = 'pocketBaseInstance'
+              ..type = refer('PocketBase?')
+              ..named = true
+              ..required = false,
+          ),
+        ])
+        ..lambda = true
+        ..body = refer('HelperUtils')
+            .property('buildFileUrl')
+            .call(
+              [literalString(collection.name), refer('id'), refer('fileName')],
+              {'pocketBaseInstance': refer('pocketBaseInstance')},
+            )
+            .code,
     );
   }
 
@@ -435,6 +472,39 @@ class ModelGenerator {
             'collection': literalString(collection.name),
             'mapper': refer(collection.className).property('fromMap'),
           }).code,
+      );
+    }
+
+    for (final field in collection.fields) {
+      if (!field.isFileField) continue;
+
+      final helperType = field.isList ? 'MultiFileHelper' : 'SingleFileHelper';
+
+      yield Method(
+        (m) => m
+          ..docs.add('/// Access the file api for the `${field.name}` field')
+          ..returns = refer('$helperType<${collection.className}>')
+          ..name = '${field.fieldName}Api'
+          ..requiredParameters.addAll([
+            Parameter(
+              (p) => p
+                ..type = refer('String')
+                ..name = 'id'
+                ..named = false,
+            ),
+          ])
+          ..body = refer('FileHelper')
+              .newInstance(
+                [],
+                {
+                  'collection': literalString(collection.name),
+                  'id': refer('id'),
+                  'field': literalString(field.name),
+                  'mapper': refer(collection.className).property('fromMap'),
+                },
+                [refer(collection.className)],
+              )
+              .code,
       );
     }
   }

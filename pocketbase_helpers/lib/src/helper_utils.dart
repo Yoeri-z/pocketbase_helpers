@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 import 'package:pocketbase_helpers/src/io_only/export.dart' as io;
 
 typedef HelperHook =
@@ -151,5 +152,18 @@ abstract final class HelperUtils {
   ///Build a sort string from a given field and ascending boolean property
   static String? buildSortString({String? sortField, bool ascending = true}) {
     return sortField != null ? '${ascending ? '+' : '-'}$sortField' : null;
+  }
+
+  static Uri buildFileUrl(
+    String collection,
+    String recordId,
+    String fileName, {
+    PocketBase? pocketBaseInstance,
+    Map<String, dynamic> queryParameters = const {},
+  }) {
+    return (pocketBaseInstance ?? PocketBaseConnection.pb).buildURL(
+      'api/files/$collection/$recordId/$fileName',
+      queryParameters,
+    );
   }
 }

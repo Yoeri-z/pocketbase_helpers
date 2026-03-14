@@ -1,7 +1,8 @@
 # pocketbase_helpers
 
-A Dart package that simplifies working with **[PocketBase](https://pocketbase.io)** using **type-safe models**.
-It provides helpers for collections, connection management, search utilities, file handling, and relation expansion.
+A Dart package that simplifies working with **PocketBase** using **type-safe Dart models**.
+
+It provides helpers for collections, authentication, connection management, search utilities, file handling, and relation expansion.
 
 The package is modular, you can use only the parts you need.
 
@@ -9,20 +10,25 @@ The package is modular, you can use only the parts you need.
 
 # Features
 
-- **Type Safety** – Generated models with strong typing
-- **Connection Manager** – Simple global PocketBase instance
-- **Collection Helpers** – Concise type safe API wrappers over the pocketbase sdk
-- **Advanced Search** – Keyword search across multiple fields
-- **File & Relation Utilities** – Simplified file and expansion handling
-- **Hooks** – Automatically modify data before create/update
-- **Modular Design** – Use helpers independently if needed
-- **One-Liner Operations** – Common database operations with minimal code
+- Type-safe models generated from PocketBase schema
+- Concise collection API wrapper
+- Authentication helpers
+- File and relation utilities
+- Keyword search across multiple fields
+- Connection manager with lifecycle hooks
+- Modular architecture
 
 ---
 
 # Quick Start
 
-## 1. Generate Models (Recommended)
+## 1. Install the package
+
+```
+dart pub add pocketbase pocketbase_helpers
+```
+
+## 2. Generate Models (Recommended)
 
 Before writing any code, generate Dart models from your PocketBase schema.
 
@@ -40,21 +46,6 @@ pb_generate -s pb_schema.json -o lib/models.dart
 
 This generates strongly typed models with built-in API helpers.
 
-Example generated usage:
-
-```dart
-final users = await Users.api().getFullList();
-```
-
-If you want to use your own pocketbase instance:
-
-```dart
-final pb = PocketBase('http://127.0.0.1:8090');
-final users = await Users.api(pb).getFullList();
-```
-
----
-
 ## 3. Use Your Generated Models
 
 You can use your models by opening a connection and calling the api.
@@ -71,6 +62,7 @@ void main() async {
     data: {'title': 'Powering flutter apps with pocketbase!'},
   );
 
+  //Connection should be closed at the end of your program
   PocketBaseConnection.close();
 }
 ```
@@ -79,296 +71,374 @@ This is all you need to get started with this package, but if you want to learn 
 
 ---
 
-# CollectionHelper
+# Mental Model
 
-`CollectionHelper` is the main interface used to interact with PocketBase collections.
+When using this package there are **four main pieces**:
 
-All generated models expose a static `.api()` method that simply returns a configured `CollectionHelper` for that collection.
+| Component                                                            | Purpose                                                     |
+| -------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **PocketBaseConnection**                                             | Manages the global PocketBase instance                      |
+| **Model (`User`)**                                                   | Represents a single database record                         |
+| **Collection API (`Users`)**                                         | Provides static helpers for interacting with the collection |
+| **CollectionHelper**, **AuthHelper**, **FileHelper**, **BaseHelper** | The underlying helpers that make the api calls              |
 
-Example:
+Example flow:
 
-```dart
-final users = Users.api();
+```
+Users.api().getFullList()
 ```
 
-This is equivalent to manually creating the helper:
+1. `Users.api()` returns a `CollectionHelper<User>`
+2. The helper performs the query through PocketBase
+3. Results are mapped to `User` models
 
-```dart
-final users = CollectionHelper(
-  pocketBaseInstance: PocketBaseConnection.pb,
-  collection: 'users',
-  mapper: Users.fromMap,
-);
-```
-
-Once you have a `CollectionHelper`, you can perform all pocketbase operations:
-
-```dart
-final users = Users.api();
-
-// fetch
-final list = await users.getFullList();
-
-// fetch single record
-final user = await users.getOne('record_id');
-
-// create
-final newUser = await users.create(
-  data: {'email': 'test@example.com'},
-);
-
-// update
-await users.update(user.copyWith(name: 'Jane'));
-
-// delete
-await users.delete(user.id);
-```
+These components can be mixed and matched, if you dont use the generator you can ignore the Model and CollectionAPI components. If you have your own `PocketBase` instance you can ignore the `PocketBaseConnection` component.
 
 ---
 
-# Authenticating
+# Index
 
-All methods related to authenticating are available through the AuthHelper, similarly to CollectionHelper it will be generated when using the cli.
-You can also create an `AuthHelper` yourself by calling its constructor.
+- [Quick Start](#quick-start)
+- [Mental Model](#mental-model)
+- [Connection Management](#connection-management)
+  - [PocketBaseConnection](#pocketbaseconnection)
+  - [Connection Hooks](#connection-hooks)
+- [Generated Models](#generated-models)
+  - [Entity Model](#entity-model)
+  - [Collection API](#collection-api)
+  - [Generated Static Methods](#generated-static-methods)
+- [Collection API](#collection-api)
+- [CRUD Operations](#crud-operations)
+- [Querying Data](#querying-data)
+- [Authentication](#authentication)
+- [Searching](#searching)
+- [File Handling](#file-handling)
+- [Relation Expansions](#relation-expansions)
+- [Manual Models](#manual-models)
+- [Low-Level API](#low-level-api)
+- [Utilities](#utilities)
+- [Modular Usage](#modular-usage)
+- [License](#license)
 
-```dart
-import 'models.dart';
-
-void main() async {
-  PocketBaseConnection.open('http://127.0.0.1:8090');
-
-  final result = await Users.auth().withPassword('johndoe@gmail.com', 'verysecretpassword');
-
-  // status of the http request
-  print(result.status);
-  // authenticated record, only available if status was ok
-  print(result.record);
-
-  PocketBaseConnection.close();
-}
-```
-
-The `AuthHelper` has all the same methods for authenticating as the regular pocketbase sdk.
+---
 
 # Connection Management
 
 ## PocketBaseConnection
 
-The connection manager provides a single shared PocketBase instance.
+`PocketBaseConnection` manages a shared PocketBase instance.
 
 ```dart
 PocketBaseConnection.open(
   'http://127.0.0.1:8090',
   lang: 'en-US',
-  authStore: persistenAuthStore,
-
+  authStore: persistentAuthStore,
 );
 ```
 
-Access the active PocketBase instance:
+Access the active connection:
 
 ```dart
 final pb = PocketBaseConnection.pb;
 ```
 
-Close the connection when the application shuts down:
+Close it when the application shuts down:
 
 ```dart
 PocketBaseConnection.close();
-```
-
-Default address if none is specified:
-
-```dart
-PocketBaseConnection.defaultAddress;
-// http://localhost:8090
 ```
 
 ---
 
 ## Connection Hooks
 
-Hooks allow automatically modifying data before create/update.
+Hooks allow modifying data before create or update.
 
 ```dart
 PocketBaseConnection.setHooks(
   preCreationHook: (collection, pb, map) {
-
     if (pb.authStore.isValid) {
       map['created_by'] = pb.authStore.record?.id;
     }
-
-
     return map;
   },
-
   preUpdateHook: (collection, pb, map) {
-
     if (pb.authStore.isValid) {
       map['updated_by'] = pb.authStore.record?.id;
     }
-
     return map;
   },
 );
 ```
 
-to undo settings a hook simply set the hook to a function that immediately returns map.
+Reset hooks by returning the map immediately.
+
+---
+
+# Generated Models
+
+The CLI generates **two classes per collection**.
+
+| Class   | Purpose                                               |
+| ------- | ----------------------------------------------------- |
+| `User`  | Data model representing a record                      |
+| `Users` | Static API helper for interacting with the collection |
+
+Example for a `users` collection.
+
+---
+
+## Entity Model
+
+The entity represents a record in the database. Below is an example of what such a record looks like.
 
 ```dart
-PocketBaseConnection.setHooks(
-  preCreationHook: (_, _, map) => map,
-  preUpdateHook: (_, _, map) => map,
+class User implements PocketBaseRecord {
+  final String id;
+  final String email;
+
+  factory User.fromMap(Map<String,dynamic> map);
+
+  Map<String,dynamic> toMap();
+
+  Url getFileUrl(String fileName);
+}
+```
+
+Responsibilities:
+
+- Store record data
+- Convert between Dart objects and PocketBase JSON
+
+---
+
+## Collection API
+
+The generator creates a companion class exposing static helpers.
+
+```dart
+final users = Users.api();
+```
+
+This returns a configured `CollectionHelper<User>`.
+
+Equivalent manual setup:
+
+```dart
+CollectionHelper<User>(
+  pocketBaseInstance: PocketBaseConnection.pb,
+  collection: 'users',
+  mapper: User.fromMap,
 );
 ```
 
 ---
 
-# CRUD Operations
+## Generated Static Methods
+
+### `api()`
+
+Returns a `CollectionHelper` for the collection.
 
 ```dart
-// Fetch record
-final user = await Users.api().getOne('record_id');
+final users = Users.api();
+```
 
-// Fetch multiple
-final users = await Users.api().getMultiple(['id1', 'id2']);
+---
 
-// Create
+### `auth()`
+
+Returns an authentication helper.
+
+```dart
+await Users.auth().withPassword(email, password);
+```
+
+Only available for auth collections.
+
+---
+
+### File Field APIs
+
+Each file field generates a helper method.
+
+Example:
+
+```dart
+Users.avatarApi(userId);
+```
+
+This returns a `FileHelper`.
+
+---
+
+# Collection API
+
+`CollectionHelper` performs database operations for a collection.
+
+Generated models expose it through `.api()`.
+
+```dart
+final users = Users.api();
+```
+
+---
+
+## CRUD Operations
+
+```dart
+// fetch one
+final user = await Users.api().getOne(id);
+
+// fetch multiple
+final users = await Users.api().getMultiple([id1, id2]);
+
+// create
 final newUser = await Users.api().create(data: {
-  'email': 'user@example.com',
-  'name': 'John Doe'
+  'email': 'user@example.com'
 });
 
-// Update
-final updated = await Users.api().update(
-  user.copyWith(name: 'Jane Doe')
+// update
+await Users.api().update(
+  user.copyWith(name: 'Jane')
 );
 
-// Delete
-await Users.api().delete('record_id');
+// delete
+await Users.api().delete(user.id);
 ```
 
 ---
 
-# Query Operations
+# Querying Data
 
 ```dart
-// Paginated
-final page = await Users.api().getList(
+// Get a paginated list
+await Users.api().getList(
   page: 1,
   perPage: 20,
   sort: '-created',
 );
-
-// All records
-final users = await Users.api().getFullList();
-
-// Optional fetch
-final user = await Users.api().getOneOrNull();
-
-// Count
-final count = await Users.api().count();
+// get a full list
+await Users.api().getFullList();
+// get the first record matching the query or null if there was no match
+await Users.api().getOneOrNull();
+// count the records matching the query
+await Users.api().count();
 ```
 
 ---
 
-# Filtering & Sorting
+## Filtering
 
-All query operations can be filtered like this:
+All queries support PocketBase filter and sorting expressions.
 
 ```dart
-final users = await Users.api().getList(
+await Users.api().getList(
   expr: 'active = {:active}',
   params: {'active': true},
-);
-
-final users = await Users.api().getList(
   sort: '-created,name',
 );
 ```
 
 ---
 
-# Advanced Search
+# Authentication
 
-Search keywords across multiple fields. This is not a pocketbase native operation,
-the package breaks the search query down into a big filter and uses that with the regular api.
+Authentication is handled through `AuthHelper`.
 
 ```dart
-final results = await Products.api().search(
+final result = await Users.auth()
+  .withPassword(email, password);
+
+print(result.status);
+print(result.record);
+```
+
+All authentication methods from the PocketBase SDK are supported.
+
+---
+
+# Searching
+
+Search keywords across multiple fields.
+
+```dart
+await Products.api().search(
   keywords: ['phone', 'apple'],
-  searchableFields: ['name', 'description'],
+  searchableFields: ['name','description'],
   page: 1,
   perPage: 20,
 );
 ```
 
-Additional filters:
+Additional filters can be added.
 
 ```dart
-final results = await Products.api().search(
+await Products.api().search(
   keywords: ['laptop'],
-  searchableFields: ['name', 'description'],
-  additionalExpressions: [
-    'price > {:minPrice}',
-    'in_stock = {:inStock}'
-  ],
-  additionalParams: {
-    'minPrice': 500,
-    'inStock': true
-  },
+  searchableFields: ['name','description'],
+  additionalExpressions: ['price > {:minPrice}'],
+  additionalParams: {'minPrice': 500},
 );
 ```
 
 ---
 
-# File Operations
+# File Handling
 
-Single File operations:
+File fields are managed through `FileHelper`.
+
+Generated helpers:
 
 ```dart
-// Build file URL
-final url = Users.api().buildFileUrl('user_id', 'avatar.jpg');
+final avatar = Users.avatarApi(user.id);
+```
 
-// File field
-final avatar = Users.api().fileField('user_id', 'avatar');
+Manual helper:
 
-await avatar.set('profile.jpg', bytes);
+```dart
+final avatar = Users.api().fileField(user.id, 'avatar');
+```
+
+Set a file:
+
+```dart
+await avatar.set('photo.jpg', bytes);
+```
+
+Remove a file:
+
+```dart
 await avatar.unset();
 ```
 
 Multiple files:
 
 ```dart
-final gallery = Posts.api().fileField('post_id', 'images');
-
 await gallery.add('image1.jpg', bytes);
-
-await gallery.addMany({
-  'image2.jpg': bytes,
-  'image3.jpg': bytes
-});
-
 await gallery.remove('image1.jpg');
 await gallery.removeAll();
+```
+
+File URLs:
+
+```dart
+user.getFileUrl(user.avatar);
+
+Users.api().buildFileUrl(user.id, user.avatar);
 ```
 
 ---
 
 # Relation Expansions
 
-PocketBase allows expanding relations.
+PocketBase supports expanding relations.
 
-`pocketbase_helpers` can automatically map those to model fields. This feature only works when you make your own custom models.
+Models can map these directly.
 
-Example models:
+Example:
 
 ```dart
-class User implements PocketBaseRecord {
-  final String id;
-  final String name;
-}
-
 class Post implements PocketBaseRecord {
   final String id;
   final String userId;
@@ -376,20 +446,18 @@ class Post implements PocketBaseRecord {
 }
 ```
 
-Configure helper:
+Configure mapping:
 
 ```dart
-final helper = CollectionHelper(
+CollectionHelper(
   pocketBaseInstance: pb,
   collection: 'posts',
   mapper: Post.fromMap,
-  expansions: {
-    'user_id': 'user'
-  },
+  expansions: {'user_id': 'user'},
 );
 ```
 
-Now expansions are automatic:
+Query:
 
 ```dart
 final post = await helper.getOne(postId);
@@ -397,22 +465,13 @@ final post = await helper.getOne(postId);
 print(post.user.name);
 ```
 
-Additional expansions per query:
-
-```dart
-final post = await helper.getOne(
-  postId,
-  additionalExpansions: {
-    'category_id': 'category'
-  },
-);
-```
+Additional expansions can be specified per query.
 
 ---
 
-# Using Without Generated Models
+# Manual Models
 
-You can also use helpers with manual models.
+Helpers can also be used without the generator.
 
 ```dart
 class User implements PocketBaseRecord {
@@ -420,12 +479,7 @@ class User implements PocketBaseRecord {
   final String id;
   final String email;
 
-  User({
-    required this.id,
-    required this.email,
-  });
-
-  static User fromMap(Map<String,dynamic> map){
+  static User fromMap(Map<String,dynamic> map) {
     return User(
       id: map['id'],
       email: map['email'],
@@ -440,10 +494,10 @@ class User implements PocketBaseRecord {
 }
 ```
 
-Create helper:
+Create a helper:
 
 ```dart
-final helper = CollectionHelper(
+CollectionHelper(
   pocketBaseInstance: PocketBase('http://127.0.0.1:8090'),
   collection: 'users',
   mapper: User.fromMap,
@@ -454,18 +508,14 @@ final helper = CollectionHelper(
 
 # Low-Level API
 
-## BaseHelper
-
-Use `BaseHelper` for maximum flexibility.
+`BaseHelper` provides minimal wrappers around PocketBase.
 
 ```dart
-final pb = PocketBase('http://127.0.0.1:8090');
-
 final helper = BaseHelper(
   pocketBaseInstance: pb,
 );
 
-final users = await helper.getFullList(
+await helper.getFullList(
   'users',
   mapper: User.fromMap,
 );
@@ -475,49 +525,56 @@ final users = await helper.getFullList(
 
 # Utilities
 
-`HelperUtils` contains useful helpers.
+`HelperUtils` contains helper functions.
 
 ```dart
+// clean up a map, prunes empty strings and maps to work with dart null safety.
 HelperUtils.cleanMap(rawMap);
 
-HelperUtils.getNamesFromUrls([
-  'http://localhost:8090/api/files/...'
-]);
+// gets file names from a list of file urls
+HelperUtils.getNamesFromUrls(urls);
 
+// builds a sort string for sorting by a singular field.
 HelperUtils.buildSortString('created', false);
 
+// builds the expression and escaped parameters to preform a search query
+// requires a list of keywords and searchable fields as parameters.
 final (expr, params) = HelperUtils.buildQuery(
   ['apple','phone'],
   ['name','description'],
 );
+
+// build a file url for a file on a record
+HelperUtils.buildFileUrl(collection, recordId, fileName);
 ```
 
 ---
 
 # Modular Usage
 
-You can use only the parts you need.
+You can use individual components if desired.
 
-### Full stack
+Full stack:
 
 ```dart
 PocketBaseConnection.open(url);
-final users = await Users.api().getFullList();
+
+await Users.api().getFullList();
 ```
 
-### Only CollectionHelper
+Collection helper only:
 
 ```dart
-final helper = CollectionHelper(...);
+CollectionHelper(...);
 ```
 
-### Only BaseHelper
+Low-level API:
 
 ```dart
-final helper = BaseHelper(...);
+BaseHelper(...);
 ```
 
-### Only Utilities
+Utilities only:
 
 ```dart
 HelperUtils.cleanMap(data);
@@ -525,28 +582,12 @@ HelperUtils.cleanMap(data);
 
 ---
 
-# Why Use pocketbase_helpers
-
-### Type Safety
-
-Generated models give compile-time safety and autocomplete.
-
-### Developer Productivity
-
-Common database operations become simple one-liners.
-
-### Modular Architecture
-
-Use the full stack or only individual components.
-
-### Handles PocketBase Quirks
-
-File management, expansions, and empty field cleanup are handled automatically.
-
----
-
 # License
 
 MIT licensed.
 
-Contributions and PRs are welcome.
+Contributions and pull requests are welcome.
+
+---
+
+If you'd like, I can also show **one documentation trick that dramatically improves pub.dev readability**: splitting the docs into **"Guide" + "API Reference" sections**, which makes packages feel much more polished and easier to navigate.

@@ -15,7 +15,6 @@ void main() {
     service = MockRecordService();
     when(() => pb.collection(any())).thenReturn(service);
     fileHelper = FileHelper(
-      pb: pb,
       collection: 'dummy',
       id: 'recordId',
       field: 'fileField',

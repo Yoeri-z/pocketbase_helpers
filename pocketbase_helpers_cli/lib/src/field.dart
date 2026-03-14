@@ -25,11 +25,13 @@ class PocketBaseField {
       (type == 'relation' || type == 'file' || type == 'select') &&
       maxSelect > 1;
 
+  bool get isFileField => type == 'file';
+
   String get fieldName => name.toCamelCase();
 
   String get dartType {
     if (isList) return 'List<String>';
-    final suffix = isDartRequired ? '?' : '';
+    final suffix = isDartRequired ? '' : '?';
 
     return switch (type) {
       'text' || 'email' || 'url' || 'editor' || 'password' => 'String$suffix',

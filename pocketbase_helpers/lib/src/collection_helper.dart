@@ -298,33 +298,4 @@ class CollectionHelper<T extends PocketBaseRecord> {
     query: query,
     headers: headers,
   );
-
-  ///Returns a helper to help operate on files in a record.
-  FileHelper<T> fileField(
-    String id,
-    String field, {
-    Map<String, String>? expansions,
-  }) {
-    return FileHelper(
-      collection: collectionName,
-      pb: pb,
-      id: id,
-      field: field,
-      mapper: _mapper,
-      expansions: expansions,
-    );
-  }
-
-  Uri buildFileUrl(
-    String recordId,
-    String fileName, [
-    Map<String, dynamic> queryParameters = const {},
-  ]) {
-    return _helper.buildFileUrl(
-      collectionName,
-      recordId,
-      fileName,
-      queryParameters,
-    );
-  }
 }

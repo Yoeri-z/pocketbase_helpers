@@ -1,6 +1,3 @@
-import 'dart:typed_data';
-import 'package:http/http.dart' as http;
-
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/src/pocketbase_connection.dart';
 
@@ -66,7 +63,7 @@ class BaseHelper {
 
     final filter = pb.filter(template, values);
 
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .getList(
           filter: filter,
@@ -80,21 +77,17 @@ class BaseHelper {
         );
 
     return TypedResultList(
-      result.items
-          .map(
-            (record) => mapper(
-              HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
-            ),
-          )
+      record.items
+          .map((record) => mapper(_getRecordJson(expansions, record)))
           .toList(),
-      page: result.page,
-      perPage: result.perPage,
-      totalItems: result.totalItems,
-      totalPages: result.totalPages,
+      page: record.page,
+      perPage: record.perPage,
+      totalItems: record.totalItems,
+      totalPages: record.totalPages,
     );
   }
 
-  ///Get a paginated list from a collection, `expr` and `params` fields can be optionally supplied to filter the result
+  ///Get a paginated list from a collection, `expr` and `params` fields can be optionally supplied to filter the record
   Future<TypedResultList<T>> getList<T extends Object>(
     String collection, {
     required RecordMapper<T> mapper,
@@ -114,7 +107,7 @@ class BaseHelper {
       filter = pb.filter(expr, params ?? const {});
     }
 
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .getList(
           page: page,
@@ -129,21 +122,17 @@ class BaseHelper {
         );
 
     return TypedResultList(
-      result.items
-          .map(
-            (record) => mapper(
-              HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
-            ),
-          )
+      record.items
+          .map((record) => mapper(_getRecordJson(expansions, record)))
           .toList(),
-      page: result.page,
-      perPage: result.perPage,
-      totalItems: result.totalItems,
-      totalPages: result.totalPages,
+      page: record.page,
+      perPage: record.perPage,
+      totalItems: record.totalItems,
+      totalPages: record.totalPages,
     );
   }
 
-  ///Get a full list from a collection,  `expr` and `params` fields can be optionally supplied to filter the result
+  ///Get a full list from a collection,  `expr` and `params` fields can be optionally supplied to filter the record
   Future<List<T>> getFullList<T extends Object>(
     String collection, {
     int batch = 500,
@@ -160,7 +149,7 @@ class BaseHelper {
     if (expr != null) {
       filter = pb.filter(expr, params ?? const {});
     }
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .getFullList(
           filter: filter,
@@ -172,12 +161,8 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return result
-        .map(
-          (record) => mapper(
-            HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
-          ),
-        )
+    return record
+        .map((record) => mapper(_getRecordJson(expansions, record)))
         .toList();
   }
 
@@ -191,7 +176,7 @@ class BaseHelper {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .getOne(
           id,
@@ -200,9 +185,7 @@ class BaseHelper {
           query: query ?? const {},
           headers: headers ?? const {},
         );
-    return mapper(
-      HelperUtils.mergeExpansions(expansions, result.toJson()).clean(),
-    );
+    return mapper(_getRecordJson(expansions, record));
   }
 
   ///Get multiple records from a collection by their ids.
@@ -228,7 +211,7 @@ class BaseHelper {
 
     final expr = ids.indexed.map((r) => 'id = {:id${r.$1}}').join(' || ');
     final params = {for (final r in ids.indexed) 'id${r.$1}': r.$2};
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .getFullList(
           filter: pb.filter(expr, params),
@@ -238,12 +221,8 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return result
-        .map(
-          (record) => mapper(
-            HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
-          ),
-        )
+    return record
+        .map((record) => mapper(_getRecordJson(expansions, record)))
         .toList();
   }
 
@@ -264,7 +243,7 @@ class BaseHelper {
       filter = pb.filter(expr, params ?? const {});
     }
 
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .getList(
           page: 1,
@@ -276,13 +255,13 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    if (result.items.isEmpty) {
+    if (record.items.isEmpty) {
       return null;
     } else {
       return mapper(
         HelperUtils.mergeExpansions(
           expansions,
-          result.items.first.toJson(),
+          record.items.first.toJson(),
         ).clean(),
       );
     }
@@ -302,7 +281,7 @@ class BaseHelper {
       filter = pb.filter(expr, params ?? const {});
     }
 
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .getList(
           page: 1,
@@ -312,7 +291,7 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return result.totalItems;
+    return record.totalItems;
   }
 
   ///Create a new record from the `data` argument
@@ -339,9 +318,7 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return mapper(
-      HelperUtils.mergeExpansions(expansions, record.toJson()).clean(),
-    );
+    return mapper(_getRecordJson(expansions, record));
   }
 
   ///Update the supplied record, effectively this syncs the record that is supplied the database
@@ -355,7 +332,7 @@ class BaseHelper {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final result = await pb
+    final record = await pb
         .collection(collection)
         .update(
           id,
@@ -370,10 +347,13 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return mapper(
-      HelperUtils.mergeExpansions(expansions, result.toJson()).clean(),
-    );
+    return mapper(_getRecordJson(expansions, record));
   }
+
+  Map<String, dynamic> _getRecordJson(
+    Map<String, String>? expansions,
+    RecordModel record,
+  ) => HelperUtils.mergeExpansions(expansions, record.toJson()).clean();
 
   ///Delete a record by its id
   Future<void> delete(
@@ -391,250 +371,6 @@ class BaseHelper {
           query: query ?? const {},
           headers: headers ?? const {},
         );
-  }
-
-  ///Returns a helper to help operate on files in a record.
-  FileHelper<T> fileField<T extends PocketBaseRecord>(
-    String collection, {
-    required String id,
-    required String field,
-    required RecordMapper<T> mapper,
-    Map<String, String>? expansions,
-  }) {
-    return FileHelper<T>(
-      collection: collection,
-      pb: pb,
-      id: id,
-      field: field,
-      mapper: mapper,
-      expansions: expansions,
-    );
-  }
-
-  ///Get the absolute file url for a file on a record
-  Uri buildFileUrl(
-    String collection,
-    String recordId,
-    String fileName, [
-    Map<String, dynamic> queryParameters = const {},
-  ]) {
-    return pb.buildURL(
-      'api/files/$collection/$recordId/$fileName',
-      queryParameters,
-    );
-  }
-}
-
-///A helper to do operations on files.
-class FileHelper<T extends Object> {
-  ///A helper to do operations on files.
-  const FileHelper({
-    required PocketBase pb,
-    required this.collection,
-    required this.id,
-    required this.field,
-    required RecordMapper<T> mapper,
-    Map<String, String>? expansions,
-  }) : _pb = pb,
-       _mapper = mapper,
-       _expansions = expansions;
-
-  final PocketBase _pb;
-  final RecordMapper<T> _mapper;
-  final Map<String, String>? _expansions;
-
-  ///The collection this helper is operating on.
-  final String collection;
-
-  ///The id of the record this helper is operating on.
-  final String id;
-
-  ///The file field this helper is operating on
-  final String field;
-
-  ///Set a single file in the field.
-  Future<T> set(
-    String fileName,
-    Uint8List fileData, {
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) async {
-    final record = await _pb
-        .collection(collection)
-        .update(
-          id,
-          files: [
-            http.MultipartFile.fromBytes(field, fileData, filename: fileName),
-          ],
-          fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(_expansions),
-          query: query ?? const {},
-          headers: headers ?? const {},
-        );
-
-    return _mapper(
-      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
-    );
-  }
-
-  ///Sets the file field to be empty.
-  ///
-  ///Only works on fields that do not support multiple files.
-  ///If you want to clear all files on a multi file field, use [removeAll] instead.
-  Future<T> unset({
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) async {
-    final record = await _pb
-        .collection(collection)
-        .update(
-          id,
-          body: {field: null},
-          fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(_expansions),
-          query: query ?? const {},
-          headers: headers ?? const {},
-        );
-
-    return _mapper(
-      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
-    );
-  }
-
-  ///Add a file to the field, only works if the field supports multiple files.
-  Future<T> add(
-    String fileName,
-    Uint8List fileData, {
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) async {
-    final record = await _pb
-        .collection(collection)
-        .update(
-          id,
-          files: [
-            http.MultipartFile.fromBytes(
-              '$field+',
-              fileData,
-              filename: fileName,
-            ),
-          ],
-          fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(_expansions),
-          query: query ?? const {},
-          headers: headers ?? const {},
-        );
-
-    return _mapper(
-      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
-    );
-  }
-
-  ///Add multiple files to the field, only works if the fieldSupports multiple files.
-  Future<T> addMany(
-    Map<String, Uint8List> files, {
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) async {
-    final record = await _pb
-        .collection(collection)
-        .update(
-          id,
-          files: [
-            for (final entry in files.entries)
-              http.MultipartFile.fromBytes(
-                '$field+',
-                entry.value,
-                filename: entry.key,
-              ),
-          ],
-          fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(_expansions),
-          query: query ?? const {},
-          headers: headers ?? const {},
-        );
-
-    return _mapper(
-      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
-    );
-  }
-
-  ///Remove a file from the field, only works if the field supports multiple files.
-  Future<T> remove(
-    String fileName, {
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) async {
-    final record = await _pb
-        .collection(collection)
-        .update(
-          id,
-          body: {
-            '$field-': [fileName],
-          },
-          fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(_expansions),
-          query: query ?? const {},
-          headers: headers ?? const {},
-        );
-
-    return _mapper(
-      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
-    );
-  }
-
-  ///Remove multiple files from the field, only works if the field supports multiple files.
-  Future<T> removeMany(
-    List<String> names, {
-    Map<String, String>? expansions,
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) async {
-    final record = await _pb
-        .collection(collection)
-        .update(
-          id,
-          body: {'$field-': names},
-          fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(_expansions),
-          query: query ?? const {},
-          headers: headers ?? const {},
-        );
-
-    return _mapper(
-      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
-    );
-  }
-
-  ///Remove multiple files from the field, only works if the field supports multiple files.
-  ///
-  ///If you want to remove the file from a single file field use [unset] instead.
-  Future<T> removeAll({
-    Map<String, String>? expansions,
-    List<String>? fields,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
-  }) async {
-    final record = await _pb
-        .collection(collection)
-        .update(
-          id,
-          body: {'$field-': []},
-          fields: fields?.join(','),
-          expand: HelperUtils.buildExpansionString(_expansions),
-          query: query ?? const {},
-          headers: headers ?? const {},
-        );
-
-    return _mapper(
-      HelperUtils.mergeExpansions(_expansions, record.toJson()).clean(),
-    );
   }
 }
 
