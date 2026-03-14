@@ -1,3 +1,5 @@
+import 'package:pocketbase/pocketbase.dart';
+
 ///A function that maps a record to an object
 typedef RecordMapper<T extends Object> = T Function(Map<String, dynamic> map);
 
@@ -26,6 +28,38 @@ class TypedResultList<T> {
 
   ///The total amount of pages in the collection
   final int totalPages;
+}
+
+enum ChangeAction {
+  create,
+  update,
+  delete,
+  unknown;
+
+  factory ChangeAction.fromString(String action) {
+    return switch (action) {
+      'create' => ChangeAction.create,
+      'update' => ChangeAction.update,
+      'delete' => ChangeAction.delete,
+      _ => ChangeAction.unknown,
+    };
+  }
+}
+
+/// A typed version of [RecordSubscriptionEvent].
+/// Contains information related to the firing of a subscription event.
+class TypedRecordSubscriptionEvent<T extends Object> {
+  /// Create a new [TypedRecordSubscriptionEvent].
+  TypedRecordSubscriptionEvent({
+    this.action = ChangeAction.unknown,
+    this.record,
+  });
+
+  /// The action that caused this change.
+  final ChangeAction action;
+
+  /// The changed record.
+  final T? record;
 }
 
 ///The baseclass for all models that represent a pocketbase record.

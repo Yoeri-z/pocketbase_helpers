@@ -1,3 +1,7 @@
+## 0.8.0
+
+- Added `RealtimeHelper` to manage the realtime api.
+
 ## 0.7.0
 
 - Removed `fields` and `additionalExpansions` parameters from all `CollectionHelper` and `AuthHelper` methods to enforce mapping consistency.

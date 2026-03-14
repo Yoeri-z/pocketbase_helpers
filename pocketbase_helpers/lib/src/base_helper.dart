@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/src/pocketbase_connection.dart';
 

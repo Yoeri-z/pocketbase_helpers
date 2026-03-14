@@ -42,7 +42,7 @@ void main() {
         'password',
       );
 
-      expect(result, equals(AuthStatus.ok));
+      expect(result.status, equals(AuthStatus.ok));
       expect(result.record?.id, equals(expected.id));
     });
 

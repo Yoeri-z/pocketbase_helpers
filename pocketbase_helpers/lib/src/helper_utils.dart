@@ -154,6 +154,7 @@ abstract final class HelperUtils {
     return sortField != null ? '${ascending ? '+' : '-'}$sortField' : null;
   }
 
+  /// Build the access url to a file.
   static Uri buildFileUrl(
     String collection,
     String recordId,

@@ -181,6 +181,7 @@ class ModelGenerator {
     return Method(
       (m) => m
         ..name = 'fromMap'
+        ..static = true
         ..returns = refer(collection.className)
         ..requiredParameters.add(
           Parameter(
@@ -366,8 +367,7 @@ class ModelGenerator {
               literalString('User is not authenticated yet.'),
             ]).statement,
 
-            refer(collection.className)
-                .property('fromMap')
+            refer('fromMap')
                 .call([
                   refer('HelperUtils').property('getRecordJson').call([
                     refer(
@@ -551,6 +551,35 @@ class ModelGenerator {
           'pocketBaseInstance': refer('pocketbaseInstance'),
           'collection': literalString(collection.name),
           'mapper': refer(collection.className).property('fromMap'),
+        }).code,
+    );
+
+    yield Method(
+      (m) => m
+        ..name = 'realtime'
+        ..static = true
+        ..docs.add(
+          '/// Gets the [RealtimeHelper] for the `${collection.name}` collection',
+        )
+        ..returns = refer('RealtimeHelper')
+        ..optionalParameters.addAll([
+          Parameter(
+            (p) => p
+              ..name = 'pocketbaseInstance'
+              ..type = refer('PocketBase?'),
+          ),
+          Parameter(
+            (p) => p
+              ..name = 'debounce'
+              ..type = refer('Duration?'),
+          ),
+        ])
+        ..lambda = true
+        ..body = refer('RealtimeHelper').newInstance([], {
+          'pocketBaseInstance': refer('pocketbaseInstance'),
+          'collection': literalString(collection.name),
+          'mapper': refer(collection.className).property('fromMap'),
+          'debounce': refer('debounce'),
         }).code,
     );
 

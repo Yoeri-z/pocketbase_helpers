@@ -39,7 +39,6 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///The collection this collection helper operates on
   final String collectionName;
 
-  ///The mapper that converts a json/map into one of your models
   final RecordMapper<T> _mapper;
 
   ///Register hook to modify the json that gets sent to the pocketbase server instance on creation
@@ -48,6 +47,7 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///Register hook to modify the json that gets sent to the pocketbase server instance on updates
   final HelperHook? preUpdateHook;
 
+  ///{@template pocketbase_helpers.helper.expansions}
   ///The default expansions to be merged into this record
   ///This is better explained with an example:
   ///```
@@ -83,22 +83,25 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///}
   ///```
   ///
-  ///So now you can put
+  ///This means you can put
   ///```
   ///final User user;
   ///```
   ///in your model class
+  ///{@endtemplate}
   final Map<String, String>? expansions;
 
+  /// {@template pocketbase_helpers.helper.fields}
   /// The fields the pocketbase request should return.
   ///
   /// Returns all fields if null.
+  /// {@endtemplate}
   final List<String>? fields;
 
   final BaseHelper _helper;
 
   ///This is the raw [RecordService] for the collection
-  ///(equal to pb.collection(collectionName))
+  ///(equal to pb.collection(helper.collectionName))
   RecordService get collection => pb.collection(collectionName);
 
   ///Execute a search on records based on requested table data.
@@ -124,10 +127,10 @@ class CollectionHelper<T extends PocketBaseRecord> {
     collectionName,
     keywords: keywords,
     searchableFields: searchableFields,
-    page: page,
-    sort: sort,
-    perPage: perPage,
     mapper: _mapper,
+    page: page,
+    perPage: perPage,
+    sort: sort,
     additionalExpressions: additionalExpressions,
     additionalParams: additionalParams,
     fields: fields,
@@ -167,11 +170,11 @@ class CollectionHelper<T extends PocketBaseRecord> {
     String? expr,
     Map<String, dynamic>? params,
     String? sort,
-    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getFullList(
     collectionName,
+    batch: batch,
     mapper: _mapper,
     expr: expr,
     params: params,
@@ -185,7 +188,6 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///Get a single record from a collection by its id
   Future<T> getOne(
     String id, {
-    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getOne(
@@ -203,7 +205,6 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///If [iterative] is true, each record will be fetched by an individual api call.
   Future<List<T>> getMultiple(
     Iterable<String> ids, {
-    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
     bool iterative = false,
@@ -223,7 +224,6 @@ class CollectionHelper<T extends PocketBaseRecord> {
   Future<T?> getOneOrNull({
     String? expr,
     Map<String, String>? params,
-    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.getOneOrNull(
@@ -255,7 +255,6 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///Create a new record from the [data] argument
   Future<T> create({
     required Map<String, dynamic> data,
-    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.create(
@@ -271,7 +270,6 @@ class CollectionHelper<T extends PocketBaseRecord> {
   ///Update the supplied record, effectively this syncs the record that is supplied the database
   Future<T> update(
     T record, {
-    List<String>? fields,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) => _helper.update(

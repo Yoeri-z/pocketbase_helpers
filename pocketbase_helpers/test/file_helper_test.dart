@@ -15,6 +15,7 @@ void main() {
     service = MockRecordService();
     when(() => pb.collection(any())).thenReturn(service);
     fileHelper = FileHelper(
+      pocketBaseInstance: pb,
       collection: 'dummy',
       id: 'recordId',
       field: 'fileField',

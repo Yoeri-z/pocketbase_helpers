@@ -72,8 +72,10 @@ class AuthHelper<T extends Object> {
   Future<RecordAuthResult<T>> withOAuth2(
     String provider, {
     required void Function(Uri url) urlCallback,
-    Map<String, dynamic>? query,
-    Map<String, String>? headers,
+    List<String> scopes = const [],
+    Map<String, dynamic> createData = const {},
+    Map<String, dynamic> query = const {},
+    Map<String, String> headers = const {},
   }) async {
     try {
       final result = await pb
@@ -81,10 +83,12 @@ class AuthHelper<T extends Object> {
           .authWithOAuth2(
             provider,
             urlCallback,
+            scopes: scopes,
+            createData: createData,
             fields: _fields?.join(','),
             expand: HelperUtils.buildExpansionString(_expansions),
-            query: query ?? const {},
-            headers: headers ?? const {},
+            query: query,
+            headers: headers,
           );
 
       return (

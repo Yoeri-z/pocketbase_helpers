@@ -1,3 +1,8 @@
+## 0.5.0
+
+- Fixed a breaking bug where fromMap wouldnt generate as static.
+- Added realtime generator static method.
+
 ## 0.4.0
 
 - Changed internal implementation to use code_builder
