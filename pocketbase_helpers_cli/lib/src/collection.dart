@@ -21,6 +21,7 @@ class PocketBaseCollection {
   List<PocketBaseField> fields = [];
 
   bool get isPrivate => name.startsWith('_');
+  bool get isAuth => type == 'auth';
 
   String get className => _singularize(name).toPascalCase();
   String get fieldName => _pluralize(name).toCamelCase();

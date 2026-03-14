@@ -166,4 +166,9 @@ abstract final class HelperUtils {
       queryParameters,
     );
   }
+
+  static Map<String, dynamic> getRecordJson(
+    RecordModel record, [
+    Map<String, String>? expansions,
+  ]) => cleanMap(HelperUtils.mergeExpansions(expansions, record.toJson()));
 }

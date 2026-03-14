@@ -117,15 +117,17 @@ class ModelGenerator {
         ..implements.add(refer('PocketBaseRecord'))
         ..fields.addAll(fields.map(_generateField))
         ..constructors.addAll([
-          _generateConstructor(collection.className, fields),
-          _generateFromMap(collection.className, fields),
+          _generateConstructor(fields),
+          _generateFromMap(collection, fields),
         ])
         ..methods.addAll([
           _generateGetFile(collection),
           _generateToMap(fields),
-          _generateCopyWith(collection.className, fields),
-          _generateEquality(collection.className, fields),
+          _generateCopyWith(collection, fields),
+          _generateEquality(collection, fields),
           _generateHashCodeGetter(fields),
+          if (collection.isAuth) _generateIsAuthenticated(collection),
+          if (collection.isAuth) _generateGetAuthenticated(collection),
         ]);
 
       if (collection.className == collection.helperClassName) {
@@ -157,10 +159,7 @@ class ModelGenerator {
     );
   }
 
-  Constructor _generateConstructor(
-    String className,
-    List<PocketBaseField> fields,
-  ) {
+  Constructor _generateConstructor(List<PocketBaseField> fields) {
     return Constructor(
       (c) => c
         ..optionalParameters.addAll(
@@ -177,7 +176,10 @@ class ModelGenerator {
     );
   }
 
-  Constructor _generateFromMap(String className, List<PocketBaseField> fields) {
+  Constructor _generateFromMap(
+    PocketBaseCollection collection,
+    List<PocketBaseField> fields,
+  ) {
     return Constructor(
       (m) => m
         ..name = 'fromMap'
@@ -189,7 +191,7 @@ class ModelGenerator {
               ..type = refer('Map<String, dynamic>'),
           ),
         )
-        ..body = refer(className)
+        ..body = refer(collection.className)
             .newInstance([], {
               for (final field in fields)
                 field.fieldName: _getMappingExpression(field),
@@ -284,6 +286,104 @@ class ModelGenerator {
     );
   }
 
+  Method _generateIsAuthenticated(PocketBaseCollection collection) {
+    return Method(
+      (m) => m
+        ..name = 'isAuthenticated'
+        ..static = true
+        ..returns = refer('bool')
+        ..docs.add(
+          '/// Check whether or not the user is authenticated to the `${collection.name}` collection',
+        )
+        ..optionalParameters.add(
+          Parameter(
+            (p) => p
+              ..name = 'pocketBaseInstance'
+              ..type = refer('PocketBase?')
+              ..named = false
+              ..required = false,
+          ),
+        )
+        ..body = Block(
+          (b) => b.statements.addAll([
+            declareFinal('pb')
+                .assign(
+                  refer(
+                    'pocketBaseInstance',
+                  ).ifNullThen(refer('PocketBaseConnection').property('pb')),
+                )
+                .statement,
+
+            // return pb.authStore.isValid && pb.authStore.record?.collectionName == 'collectionName';
+            refer('pb')
+                .property('authStore')
+                .property('isValid')
+                .and(
+                  refer('pb')
+                      .property('authStore')
+                      .property('record')
+                      .nullSafeProperty('collectionName')
+                      .equalTo(literalString(collection.name)),
+                )
+                .returned
+                .statement,
+          ]),
+        ),
+    );
+  }
+
+  Method _generateGetAuthenticated(PocketBaseCollection collection) {
+    return Method(
+      (m) => m
+        ..name = 'getAuthenticated'
+        ..static = true
+        ..returns = refer(collection.className)
+        ..docs.add(
+          '/// Returns the currently authenticated `${collection.className}`.',
+        )
+        ..docs.add(
+          '/// Throws an assertion error if the user is not authenticated to this collection.',
+        )
+        ..optionalParameters.add(
+          Parameter(
+            (p) => p
+              ..name = 'pocketBaseInstance'
+              ..type = refer('PocketBase?')
+              ..named = false
+              ..required = false,
+          ),
+        )
+        ..body = Block(
+          (b) => b.statements.addAll([
+            declareFinal('pb')
+                .assign(
+                  refer(
+                    'pocketBaseInstance',
+                  ).ifNullThen(refer('PocketBaseConnection').property('pb')),
+                )
+                .statement,
+
+            refer('assert').call([
+              refer('isAuthenticated').call([refer('pb')]),
+              literalString('User is not authenticated yet.'),
+            ]).statement,
+
+            refer(collection.className)
+                .property('fromMap')
+                .call([
+                  refer('HelperUtils').property('getRecordJson').call([
+                    refer(
+                      'pb',
+                    ).property('authStore').property('record').nullChecked,
+                  ]),
+                ])
+                .returned
+                .statement,
+          ]),
+        ),
+    );
+  }
+
   Method _generateGetFile(PocketBaseCollection collection) {
     return Method(
       (m) => m
@@ -327,11 +427,14 @@ class ModelGenerator {
     return refer(fieldName).property('toIso8601String').call([]);
   }
 
-  Method _generateCopyWith(String className, List<PocketBaseField> fields) {
+  Method _generateCopyWith(
+    PocketBaseCollection collection,
+    List<PocketBaseField> fields,
+  ) {
     return Method(
       (m) => m
         ..name = 'copyWith'
-        ..returns = refer(className)
+        ..returns = refer(collection.className)
         ..optionalParameters.addAll(
           fields.where((f) => f.type != 'autodate').map((field) {
             final paramType =
@@ -346,7 +449,7 @@ class ModelGenerator {
             );
           }),
         )
-        ..body = refer(className)
+        ..body = refer(collection.className)
             .newInstance([], {
               for (final field in fields)
                 field.fieldName: field.type == 'autodate'
@@ -360,9 +463,12 @@ class ModelGenerator {
     );
   }
 
-  Method _generateEquality(String className, List<PocketBaseField> fields) {
+  Method _generateEquality(
+    PocketBaseCollection collection,
+    List<PocketBaseField> fields,
+  ) {
     final expressions = <Expression>[
-      refer('other').isA(refer(className)),
+      refer('other').isA(refer(collection.className)),
       refer('runtimeType').equalTo(refer('other').property('runtimeType')),
     ];
 
@@ -450,7 +556,7 @@ class ModelGenerator {
         }).code,
     );
 
-    if (collection.type == 'auth') {
+    if (collection.isAuth) {
       yield Method(
         (m) => m
           ..name = 'auth'

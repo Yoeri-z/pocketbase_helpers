@@ -78,7 +78,9 @@ class BaseHelper {
 
     return TypedResultList(
       record.items
-          .map((record) => mapper(_getRecordJson(expansions, record)))
+          .map(
+            (record) => mapper(HelperUtils.getRecordJson(record, expansions)),
+          )
           .toList(),
       page: record.page,
       perPage: record.perPage,
@@ -123,7 +125,9 @@ class BaseHelper {
 
     return TypedResultList(
       record.items
-          .map((record) => mapper(_getRecordJson(expansions, record)))
+          .map(
+            (record) => mapper(HelperUtils.getRecordJson(record, expansions)),
+          )
           .toList(),
       page: record.page,
       perPage: record.perPage,
@@ -162,7 +166,7 @@ class BaseHelper {
         );
 
     return record
-        .map((record) => mapper(_getRecordJson(expansions, record)))
+        .map((record) => mapper(HelperUtils.getRecordJson(record, expansions)))
         .toList();
   }
 
@@ -185,7 +189,7 @@ class BaseHelper {
           query: query ?? const {},
           headers: headers ?? const {},
         );
-    return mapper(_getRecordJson(expansions, record));
+    return mapper(HelperUtils.getRecordJson(record, expansions));
   }
 
   ///Get multiple records from a collection by their ids.
@@ -222,7 +226,7 @@ class BaseHelper {
         );
 
     return record
-        .map((record) => mapper(_getRecordJson(expansions, record)))
+        .map((record) => mapper(HelperUtils.getRecordJson(record, expansions)))
         .toList();
   }
 
@@ -318,7 +322,7 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return mapper(_getRecordJson(expansions, record));
+    return mapper(HelperUtils.getRecordJson(record, expansions));
   }
 
   ///Update the supplied record, effectively this syncs the record that is supplied the database
@@ -347,13 +351,8 @@ class BaseHelper {
           headers: headers ?? const {},
         );
 
-    return mapper(_getRecordJson(expansions, record));
+    return mapper(HelperUtils.getRecordJson(record, expansions));
   }
-
-  Map<String, dynamic> _getRecordJson(
-    Map<String, String>? expansions,
-    RecordModel record,
-  ) => HelperUtils.mergeExpansions(expansions, record.toJson()).clean();
 
   ///Delete a record by its id
   Future<void> delete(

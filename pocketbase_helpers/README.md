@@ -56,11 +56,13 @@ import 'models.dart';
 void main() async {
   PocketBaseConnection.open('http://127.0.0.1:8090');
 
-  final users = await Users.api().getFullList();
+  await Users.auth().withPassword('johndoe@gmail.com', 'supersecretpassword');
 
-  final blog = await Blogs.api().create(
-    data: {'title': 'Powering flutter apps with pocketbase!'},
-  );
+  if(User.isAuthenticated()){
+    final blog = await Blogs.api().create(
+      data: {'title': 'Powering flutter apps with pocketbase!'},
+    );
+  }
 
   //Connection should be closed at the end of your program
   PocketBaseConnection.close();
@@ -275,14 +277,6 @@ This returns a `FileHelper`.
 # Collection API
 
 `CollectionHelper` performs database operations for a collection.
-
-Generated models expose it through `.api()`.
-
-```dart
-final users = Users.api();
-```
-
----
 
 ## CRUD Operations
 
@@ -587,7 +581,3 @@ HelperUtils.cleanMap(data);
 MIT licensed.
 
 Contributions and pull requests are welcome.
-
----
-
-If you'd like, I can also show **one documentation trick that dramatically improves pub.dev readability**: splitting the docs into **"Guide" + "API Reference" sections**, which makes packages feel much more polished and easier to navigate.
