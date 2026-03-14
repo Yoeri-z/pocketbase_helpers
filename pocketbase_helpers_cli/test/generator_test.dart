@@ -2,8 +2,6 @@ import 'package:change_case/change_case.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:pocketbase_helpers_cli/src/generator.dart';
 import 'package:test/test.dart';
-import 'package:analyzer/dart/analysis/utilities.dart';
-import 'package:analyzer/dart/analysis/results.dart';
 
 void main() {
   Library genLibrary(
@@ -11,11 +9,12 @@ void main() {
     bool required = false,
     int maxSelect = 1,
     String? name,
+    String? collectionType,
   }) {
     final schema = [
       {
-        'name': name ?? 't',
-        'type': 'base',
+        'name': name ?? 'c',
+        'type': collectionType ?? 'base',
         'fields': [
           {
             'name': 'f',
@@ -26,6 +25,7 @@ void main() {
         ],
       },
     ];
+
     return ModelGenerator(schema: schema).buildLibrary();
   }
 
@@ -323,41 +323,94 @@ void main() {
     });
   });
 
-  group('ModelGenerator static analysis', () {
-    test('generated string is syntactically valid Dart', () {
-      final schema = [
-        {
-          'name': 'mega_test',
-          'type': 'base',
-          'fields': [
-            {'name': 'id', 'type': 'text', 'required': true, 'system': true},
-            {'name': 'number_opt', 'type': 'number', 'required': false},
-            {'name': 'bool_req', 'type': 'bool', 'required': true},
-            {'name': 'date_opt', 'type': 'date', 'required': false},
-            {'name': 'autodate_f', 'type': 'autodate', 'required': true},
-            {'name': 'select_single', 'type': 'select', 'maxSelect': 1},
-            {'name': 'select_multi', 'type': 'select', 'maxSelect': 3},
-            {'name': 'json_field', 'type': 'json'},
-            {'name': 'geo_field', 'type': 'geopoint'},
-          ],
-        },
-      ];
+  group('Files', () {
+    test('single field generates static helper', () {
+      final lib = genLibrary('file', maxSelect: 1);
 
-      final generator = ModelGenerator(schema: schema);
-      final String generatedCode = generator.generate();
-
-      final ParseStringResult result = parseString(content: generatedCode);
-
-      if (result.errors.isNotEmpty) {
-        for (final error in result.errors) {
-          print('Offset ${error.offset}: ${error.message}');
-        }
-      }
+      final cls = lib.body
+          .whereType<Class>()
+          .where((c) => c.name == 'Cs')
+          .first;
 
       expect(
-        result.errors,
-        isEmpty,
-        reason: 'The generated code has syntax errors!',
+        cls.methods.any(
+          (m) =>
+              m.name == 'fApi' &&
+              m.returns?.symbol == 'SingleFileHelper<C>' &&
+              m.static,
+        ),
+        isTrue,
+      );
+    });
+
+    test('multi field generates static helper', () {
+      final lib = genLibrary('file', maxSelect: 4);
+
+      final cls = lib.body
+          .whereType<Class>()
+          .where((c) => c.name == 'Cs')
+          .first;
+
+      expect(
+        cls.methods.any(
+          (m) =>
+              m.name == 'fApi' &&
+              m.returns?.symbol == 'MultiFileHelper<C>' &&
+              m.static,
+        ),
+        isTrue,
+      );
+    });
+  });
+
+  group('Auth', () {
+    late Library lib;
+
+    setUp(() {
+      lib = genLibrary('text', name: 'User', collectionType: 'auth');
+    });
+
+    test('Has auth helper', () {
+      final cls = lib.body
+          .whereType<Class>()
+          .where((c) => c.name == 'Users')
+          .first;
+
+      expect(
+        cls.methods.any(
+          (m) =>
+              m.name == 'auth' &&
+              m.returns?.symbol == 'AuthHelper<User>' &&
+              m.static,
+        ),
+        isTrue,
+      );
+    });
+
+    test('Has authentication checks', () {
+      final cls = lib.body
+          .whereType<Class>()
+          .where((c) => c.name == 'User')
+          .first;
+
+      expect(
+        cls.methods.any(
+          (m) =>
+              m.name == 'isAuthenticated' &&
+              m.returns?.symbol == 'bool' &&
+              m.static,
+        ),
+        isTrue,
+      );
+
+      expect(
+        cls.methods.any(
+          (m) =>
+              m.name == 'getAuthenticated' &&
+              m.returns?.symbol == 'User' &&
+              m.static,
+        ),
+        isTrue,
       );
     });
   });

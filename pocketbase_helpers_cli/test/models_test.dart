@@ -175,5 +175,21 @@ void main() {
       expect(news.className, 'New');
       expect(news.helperClassName, 'News');
     });
+
+    test('is Auth', () {
+      final authCollection = PocketBaseCollection({
+        'name': 'posts',
+        'type': 'auth',
+      });
+
+      expect(authCollection.isAuth, isTrue);
+
+      final nonAuthCollection = PocketBaseCollection({
+        'name': 'posts',
+        'type': 'base',
+      });
+
+      expect(nonAuthCollection.isAuth, isFalse);
+    });
   });
 }

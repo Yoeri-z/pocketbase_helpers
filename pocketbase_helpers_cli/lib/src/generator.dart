@@ -116,14 +116,12 @@ class ModelGenerator {
         ..docs.add('/// Model for the `${collection.name}` collection.')
         ..implements.add(refer('PocketBaseRecord'))
         ..fields.addAll(fields.map(_generateField))
-        ..constructors.addAll([
-          _generateConstructor(fields),
-          _generateFromMap(collection, fields),
-        ])
+        ..constructors.addAll([_generateConstructor(fields)])
         ..methods.addAll([
-          _generateGetFile(collection),
+          _generateFromMap(collection, fields),
           _generateToMap(fields),
           _generateCopyWith(collection, fields),
+          _generateGetFile(collection),
           _generateEquality(collection, fields),
           _generateHashCodeGetter(fields),
           if (collection.isAuth) _generateIsAuthenticated(collection),
@@ -176,14 +174,14 @@ class ModelGenerator {
     );
   }
 
-  Constructor _generateFromMap(
+  Method _generateFromMap(
     PocketBaseCollection collection,
     List<PocketBaseField> fields,
   ) {
-    return Constructor(
+    return Method(
       (m) => m
         ..name = 'fromMap'
-        ..factory = true
+        ..returns = refer(collection.className)
         ..requiredParameters.add(
           Parameter(
             (p) => p
@@ -591,6 +589,7 @@ class ModelGenerator {
           ..docs.add('/// Access the file api for the `${field.name}` field')
           ..returns = refer('$helperType<${collection.className}>')
           ..name = '${field.fieldName}Api'
+          ..static = true
           ..requiredParameters.addAll([
             Parameter(
               (p) => p
