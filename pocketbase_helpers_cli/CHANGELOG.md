@@ -4,6 +4,7 @@
 - Fixed edge cases and added more tests to catch edgecases
 - Added `PocketBaseCollection` and `PocketBaseField` classes to improve testability, readability and use of this package as a dependency.
 - Added collections static class to the generated library and also added collectionname static to each helper class.
+- Added static authentication methods to auth collection generated entity models.
 
 ## 0.3.0
 
