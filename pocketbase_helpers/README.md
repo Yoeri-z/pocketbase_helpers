@@ -7,9 +7,10 @@ A powerful, type-safe Dart wrapper for **PocketBase**. Simplify your development
 # Features
 
 - **Type-Safety:** Strongly typed models generated from your schema.
-- **Realtime Ready:** First-class support for watching records and lists.
+- **Full api binding:** Generated fully typed api bindings for a large part of the pocketbase api
+- **Realtime Ready:** Support for watching records and lists or records with a debounce.
 - **Auth Simplified:** Concise helpers for authentication flows.
-- **File Management:** Easy handling of multi-file fields and URLs.
+- **File Management:** Easy handling of (multi) file fields and URLs.
 - **Extensible:** Lifecycle hooks for pre-creation and pre-update modifications.
 - **Modular:** Use the full stack or just the parts you need.
 
@@ -129,7 +130,8 @@ Modify data globally before it hits the database. Perfect for setting `created_b
 ```dart
 PocketBaseConnection.setHooks(
   preCreationHook: (collection, pb, map) {
-    if (pb.authStore.isValid) map['author'] = pb.authStore.record?.id;
+    if (User.isAuthenticated()) map['author_id'] = User.getAuthenticated().id;
+
     return map;
   },
 );
@@ -161,15 +163,21 @@ You can also use helpers without the generator by implementing `PocketBaseRecord
 
 ```dart
 class Category implements PocketBaseRecord {
+  @override
   final String id;
   final String name;
 
   Category({required this.id, required this.name});
 
-  factory Category.fromJson(Map<String, dynamic> map) => Category(id: map['id'], name: map['name']);
+  factory Category.fromMap(Map<String, dynamic> map)
+    => Category(id: map['id'], name: map['name']);
 
   @override
-  Map<String, dynamic> toJson() => {'id': id, 'name': name};
+  Map<String, dynamic> toMap() => {'id': id, 'name': name};
+
+  //If you use json_serializable you can implement toMap like this
+  @override
+  Map<String, dynamic> toMap() => toJson();
 }
 
 // Create helpers manually
@@ -179,26 +187,26 @@ final categoriesApi = CollectionHelper<Category>(
   mapper: Category.fromJson,
 );
 
-// helper for authentication
+// Helper for authentication
 final userApi = AuthHelper<User>(
   pocketBaseInstance: PocketBaseConnection.pb,
-  collection: 'categories',
+  collection: 'users',
   mapper: User.fromJson
 )
 
-// helper for file fields
+// Helper for file fields
 final userApi = FileHelper<User>(
   pocketBaseInstance: PocketBaseConnection.pb,
-  collection: 'categories',
+  collection: 'users',
   id: user.id,
   field: 'avatar'
   mapper: User.fromJson
 )
 
-// helper for powerful realtime operations
+// Helper for powerful realtime operations
 final realtimeApi = RealtimeHelper<User>(
   pocketBaseInstance: PocketBaseConnection.pb,
-  collection: 'categories',
+  collection: 'users',
   mapper: User.fromJson,
 )
 ```
@@ -219,7 +227,7 @@ await Users.api().update(user.copyWith(name: 'Jane Doe'));
 await Users.api().delete(user.id);
 
 
-//get paginated list
+//Get paginated list
 final results = await Posts.api().getList(
   page: 1,
   perPage: 20,
@@ -228,13 +236,13 @@ final results = await Posts.api().getList(
   sort: '-created',
 );
 
-// get full list
+// Get full list
 final result = await Posts.api().getFullList(/*query arguments*/),
 
-// get the first matching argument or none
+// Get the first matching argument or none
 final result = await Posts.api().getOneOrNull(/*query arguments*/),
 
-// count the amount of matching records
+// Count the amount of matching records
 final result = await Posts.api().count(/*query arguments*/),
 
 // Search query
@@ -251,7 +259,7 @@ final result = await Posts.api().search(
 The `.realtime()` helper provides reactive streams.
 
 ```dart
-// get the realtime helper, it is strongly recommended to add a debounce duration.
+// Get the realtime helper, it is strongly recommended to add a debounce duration.
 final api = Posts.realtime(debounce: Duration(milliseconds: 500));
 
 // Watch a specific record.
@@ -280,43 +288,43 @@ Manage files using field-specific helpers.
 ```dart
 final avatar = Users.avatarApi(userId);
 
-// Upload/Update
+// Upload/Update file
 await avatar.set('profile.jpg', imageBytes);
 
-// Delete
+// Remove file
 await avatar.unset();
 
-// multi file fields have a slightly different api
+// Multi file fields have a slightly different api
 final attachments = Posts.attachmentApi(postId);
 
-// add a singular file to the field
+// Add a singular file to the field
 attachments.add('file.pdf', fileBytes)
 
-// add multiple files to the field at once
+// Add multiple files to the field at once
 attachments.addMany({
   'file.pdf' : fileBytes,
   'image.png' : imageBytes,
 });
 
-// remove file with a given name
+// Remove file with a given name
 attachments.remove('file.pdf');
 
-// remove many files with the given names
+// Remove many files with the given names
 attachments.removeMany(['file.pdf', 'image.png']);
 
-// remove all files from the field
+// Remove all files from the field
 attachements.removeAll();
 
 // You can get file URLs directly from the generated model
 final url = user.getFileUrl(user.avatar);
 
-// you can also use this helper method to construct file urls
+// You can also use this helper method to construct file urls
 HelperUtils.buildFileUrl(collection, recordId, fileName);
 ```
 
 ## Authentication
 
-Simplified auth workflows via `.auth()`. All methods return a result object containing a `status` (`AuthStatus`) and the authenticated `record` (if applicable).
+Simplified auth workflows via `.auth()`. All methods handle errors themselves and return a result object containing a `status` (`AuthStatus`) and optionally the auth token and the authenticated `record` (if `AuthStatus` was `.ok`). This means that methods from the auth api do not have to be wrapped in try-catch blocks.
 
 ```dart
 // Email/Password Login
@@ -383,8 +391,8 @@ Because these JSON fields often point to other custom classes in your project, t
 
 Add the `--with-from-json` flag to your command.
 
-```powershell
-dart run pb_generate.dart -o "./lib/models/generated.dart" --with-from-json
+```bash
+pb_generate.dart -o "./lib/models/generated.dart" --with-from-json
 ```
 
 ### 2. Create your "spec" File
@@ -428,42 +436,42 @@ part 'generated.dart';
 ### Querying & Sorting
 
 ```dart
-// 1. Build advanced search queries across multiple fields
+// Build advanced search queries across multiple fields
 final (expr, params) = HelperUtils.buildQuery(
   ['apple', 'phone'],           // keywords
   ['name', 'description'],      // searchable fields
   otherFilters: ['active = true'],
 );
 
-// 2. Build sort strings (+field or -field)
+// Build sort strings (+field or -field)
 final sort = HelperUtils.buildSortString(sortField: 'created', ascending: false); // "-created"
 ```
 
 ### Data Transformation
 
 ```dart
-// 1. Clean maps (removes empty strings, making them null for Dart compatibility)
+// Clean maps (removes empty strings, making them null for Dart compatibility)
 final clean = HelperUtils.cleanMap(rawData);
 
-// 2. Merge expansions (moves 'expand' fields into the main map with custom keys)
+// Merge expansions (moves 'expand' fields into the main map with custom keys)
 final merged = HelperUtils.mergeExpansions({'user_id': 'author'}, recordMap);
 
-// 3. Get record JSON (combined clean + merge expansions)
+// Get record JSON (combined clean + merge expansions)
 final json = HelperUtils.getRecordJson(recordModel, {'user_id': 'author'});
 ```
 
 ### File & URL Helpers
 
 ```dart
-// 1. Build a direct file URL
+// Build a direct file URL
 final uri = HelperUtils.buildFileUrl('users', userId, 'avatar.jpg');
 
-// 2. Extract filenames from URLs
+// Extract filenames from URLs
 final name = HelperUtils.getNameFromUrl('https://.../file.png');
 final names = HelperUtils.getNamesFromUrls(['url1', 'url2']);
 
-// 3. IO Only: Convert file paths to Uint8List map for uploads
-// Note: Throws on Web.
+// IO Only: Convert file paths to Uint8List map for uploads
+// This method will throw when used on web platforms
 final files = HelperUtils.pathsToFiles(['/path/to/image.jpg']);
 ```
 

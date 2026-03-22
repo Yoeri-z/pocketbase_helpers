@@ -1,3 +1,7 @@
+## 0.9.2
+
+- Fixed typos and cleaned up the readme
+
 ## 0.9.1
 
 - Added static api health check method to the `PocketBaseConnection` class.
