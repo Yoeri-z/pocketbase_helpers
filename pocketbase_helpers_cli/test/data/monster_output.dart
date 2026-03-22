@@ -145,34 +145,39 @@ abstract final class Users {
   static const String collectionName = 'users';
 
   ///Gets the [CollectionHelper] for the `users` collection
-  static CollectionHelper<User> api([PocketBase? pocketbaseInstance]) =>
+  static CollectionHelper<User> api([PocketBase? pocketBaseInstance]) =>
       CollectionHelper(
-        pocketBaseInstance: pocketbaseInstance,
+        pocketBaseInstance: pocketBaseInstance,
         collection: 'users',
         mapper: User.fromMap,
       );
 
   /// Gets the [RealtimeHelper] for the `users` collection
-  static RealtimeHelper realtime([
-    PocketBase? pocketbaseInstance,
+  static RealtimeHelper realtime({
+    PocketBase? pb,
     Duration? debounce,
-  ]) =>
+  }) =>
       RealtimeHelper(
-        pocketBaseInstance: pocketbaseInstance,
+        pocketBaseInstance: pb,
         collection: 'users',
         mapper: User.fromMap,
         debounce: debounce,
       );
 
   ///Gets the [AuthHelper] for the `users` collection
-  static AuthHelper<User> auth([PocketBase? pocketbaseInstance]) => AuthHelper(
-        pocketBaseInstance: pocketbaseInstance,
+  static AuthHelper<User> auth([PocketBase? pocketBaseInstance]) => AuthHelper(
+        pocketBaseInstance: pocketBaseInstance,
         collection: 'users',
         mapper: User.fromMap,
       );
 
   /// Access the file api for the `avatar` field
-  static SingleFileHelper<User> avatarApi(String id) => FileHelper<User>(
+  static SingleFileHelper<User> avatarApi(
+    String id, [
+    PocketBase? pocketBaseInstance,
+  ]) =>
+      FileHelper<User>(
+        pocketBaseInstance: pocketBaseInstance,
         collection: 'users',
         id: id,
         field: 'avatar',
@@ -517,28 +522,32 @@ abstract final class MonsterCollections {
 
   ///Gets the [CollectionHelper] for the `monster_collection` collection
   static CollectionHelper<MonsterCollection> api(
-          [PocketBase? pocketbaseInstance]) =>
+          [PocketBase? pocketBaseInstance]) =>
       CollectionHelper(
-        pocketBaseInstance: pocketbaseInstance,
+        pocketBaseInstance: pocketBaseInstance,
         collection: 'monster_collection',
         mapper: MonsterCollection.fromMap,
       );
 
   /// Gets the [RealtimeHelper] for the `monster_collection` collection
-  static RealtimeHelper realtime([
-    PocketBase? pocketbaseInstance,
+  static RealtimeHelper realtime({
+    PocketBase? pb,
     Duration? debounce,
-  ]) =>
+  }) =>
       RealtimeHelper(
-        pocketBaseInstance: pocketbaseInstance,
+        pocketBaseInstance: pb,
         collection: 'monster_collection',
         mapper: MonsterCollection.fromMap,
         debounce: debounce,
       );
 
   /// Access the file api for the `file` field
-  static SingleFileHelper<MonsterCollection> fileApi(String id) =>
+  static SingleFileHelper<MonsterCollection> fileApi(
+    String id, [
+    PocketBase? pocketBaseInstance,
+  ]) =>
       FileHelper<MonsterCollection>(
+        pocketBaseInstance: pocketBaseInstance,
         collection: 'monster_collection',
         id: id,
         field: 'file',
@@ -546,8 +555,12 @@ abstract final class MonsterCollections {
       );
 
   /// Access the file api for the `file_multi` field
-  static MultiFileHelper<MonsterCollection> fileMultiApi(String id) =>
+  static MultiFileHelper<MonsterCollection> fileMultiApi(
+    String id, [
+    PocketBase? pocketBaseInstance,
+  ]) =>
       FileHelper<MonsterCollection>(
+        pocketBaseInstance: pocketBaseInstance,
         collection: 'monster_collection',
         id: id,
         field: 'file_multi',
@@ -555,8 +568,12 @@ abstract final class MonsterCollections {
       );
 
   /// Access the file api for the `file_non_empty` field
-  static SingleFileHelper<MonsterCollection> fileNonEmptyApi(String id) =>
+  static SingleFileHelper<MonsterCollection> fileNonEmptyApi(
+    String id, [
+    PocketBase? pocketBaseInstance,
+  ]) =>
       FileHelper<MonsterCollection>(
+        pocketBaseInstance: pocketBaseInstance,
         collection: 'monster_collection',
         id: id,
         field: 'file_non_empty',

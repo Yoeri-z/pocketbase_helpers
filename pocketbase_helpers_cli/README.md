@@ -54,12 +54,15 @@ class User implements PocketBaseRecord {
 
 // Helper class with static api() method
 abstract final class Users {
+  static const String collectionName = 'users';
+
   static CollectionHelper<User> api([PocketBase? pocketbaseInstance]) =>
       CollectionHelper(
         pocketBaseInstance: pocketbaseInstance,
         collection: 'users',
         mapper: User.fromMap,
       );
+  // more helpers like realtime(), auth(), avatarApi(), ...
 }
 ```
 

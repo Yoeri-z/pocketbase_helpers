@@ -489,13 +489,13 @@ class ModelGenerator {
         ..optionalParameters.add(
           Parameter(
             (p) => p
-              ..name = 'pocketbaseInstance'
+              ..name = 'pocketBaseInstance'
               ..type = refer('PocketBase?'),
           ),
         )
         ..lambda = true
         ..body = refer('CollectionHelper').newInstance([], {
-          'pocketBaseInstance': refer('pocketbaseInstance'),
+          'pocketBaseInstance': refer('pocketBaseInstance'),
           'collection': literalString(collection.name),
           'mapper': refer(collection.className).property('fromMap'),
         }).code,
@@ -512,18 +512,20 @@ class ModelGenerator {
         ..optionalParameters.addAll([
           Parameter(
             (p) => p
-              ..name = 'pocketbaseInstance'
-              ..type = refer('PocketBase?'),
+              ..name = 'pb'
+              ..type = refer('PocketBase?')
+              ..named = true,
           ),
           Parameter(
             (p) => p
               ..name = 'debounce'
-              ..type = refer('Duration?'),
+              ..type = refer('Duration?')
+              ..named = true,
           ),
         ])
         ..lambda = true
         ..body = refer('RealtimeHelper').newInstance([], {
-          'pocketBaseInstance': refer('pocketbaseInstance'),
+          'pocketBaseInstance': refer('pb'),
           'collection': literalString(collection.name),
           'mapper': refer(collection.className).property('fromMap'),
           'debounce': refer('debounce'),
@@ -542,13 +544,14 @@ class ModelGenerator {
           ..optionalParameters.add(
             Parameter(
               (p) => p
-                ..name = 'pocketbaseInstance'
-                ..type = refer('PocketBase?'),
+                ..name = 'pocketBaseInstance'
+                ..type = refer('PocketBase?')
+                ..named = false,
             ),
           )
           ..lambda = true
           ..body = refer('AuthHelper').newInstance([], {
-            'pocketBaseInstance': refer('pocketbaseInstance'),
+            'pocketBaseInstance': refer('pocketBaseInstance'),
             'collection': literalString(collection.name),
             'mapper': refer(collection.className).property('fromMap'),
           }).code,
@@ -574,10 +577,19 @@ class ModelGenerator {
                 ..named = false,
             ),
           ])
+          ..optionalParameters.addAll([
+            Parameter(
+              (p) => p
+                ..name = 'pocketBaseInstance'
+                ..type = refer('PocketBase?')
+                ..named = false,
+            ),
+          ])
           ..body = refer('FileHelper')
               .newInstance(
                 [],
                 {
+                  'pocketBaseInstance': refer('pocketBaseInstance'),
                   'collection': literalString(collection.name),
                   'id': refer('id'),
                   'field': literalString(field.name),

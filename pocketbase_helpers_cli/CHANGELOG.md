@@ -1,3 +1,8 @@
+## 0.8.0
+
+- Made parameters in the generated realtime helper builder named.
+- Added pocketbase instance optional unnamed parameter to the generated file apis
+
 ## 0.7.0
 
 - Added support for json fields.
