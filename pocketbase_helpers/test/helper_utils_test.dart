@@ -116,12 +116,12 @@ void main() {
     );
   });
 
-  test('pathsToFiles reads files into Map<String, Uint8List>', () {
+  test('pathsToFiles reads files into Map<String, Uint8List>', () async {
     final tempDir = Directory.systemTemp.createTempSync();
     final file1 = File('${tempDir.path}/test1.txt')..writeAsStringSync('hello');
     final file2 = File('${tempDir.path}/test2.txt')..writeAsStringSync('world');
 
-    final result = HelperUtils.pathsToFiles([file1.path, file2.path]);
+    final result = await HelperUtils.pathsToFiles([file1.path, file2.path]);
 
     expect(result['test1.txt'], equals(Uint8List.fromList('hello'.codeUnits)));
     expect(result['test2.txt'], equals(Uint8List.fromList('world'.codeUnits)));

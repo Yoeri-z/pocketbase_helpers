@@ -35,7 +35,10 @@ final class PocketBaseConnection {
   }
 
   /// Hooks to modify the raw json maps before they are sent to the server.
-  static void setHooks(HelperHook? preCreationHook, HelperHook? preUpdateHook) {
+  static void setHooks({
+    HelperHook? preCreationHook,
+    HelperHook? preUpdateHook,
+  }) {
     if (preCreationHook != null) HelperUtils.preCreationHook = preCreationHook;
     if (preUpdateHook != null) HelperUtils.preUpdateHook = preUpdateHook;
   }

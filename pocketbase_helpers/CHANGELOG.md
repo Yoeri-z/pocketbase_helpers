@@ -1,3 +1,10 @@
+## 0.10.0
+
+- Made parameters on `PocketBaseConnection.setHooks()` named.
+- Added `pathToFile` static method to the `HelperUtils`.
+- Changed the io only `pathToFile` and `pathsToFiles` to be async.
+- Added non trivial example.
+
 ## 0.9.2
 
 - Fixed typos and cleaned up the readme

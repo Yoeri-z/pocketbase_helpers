@@ -69,7 +69,7 @@ void main() async {
     });
 
     /// File fields get their own generated api
-    post = await Posts.thumbnailApi().set('cute_cat.png', imageBytes);
+    post = await Posts.thumbnailApi(user.id).set('cute_cat.png', imageBytes);
   }
 
   //Close connection when application is done

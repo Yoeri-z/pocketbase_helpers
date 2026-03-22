@@ -150,8 +150,14 @@ abstract final class HelperUtils {
 
   ///Convert filepaths into a correctly formatted filemap that is required by the addFiles method
   ///This method does not work for Web and WILL throw an error.
-  static Map<String, Uint8List> pathsToFiles(List<String> paths) {
+  static Future<Map<String, Uint8List>> pathsToFiles(List<String> paths) {
     return io.pathsToFiles(paths);
+  }
+
+  /// Convert a file path into file name and data.
+  /// This method does not work for Web and WILL throw an error.
+  static Future<(String name, Uint8List data)> pathToFile(String path) {
+    return io.pathToFile(path);
   }
 
   ///Build a sort string from a given field and ascending boolean property.

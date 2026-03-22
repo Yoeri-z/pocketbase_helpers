@@ -44,7 +44,7 @@ void main() {
     test('setHooks modifies HelperUtils hooks', () {
       Map<String, dynamic> hook(_, _, Map<String, dynamic> m) => m;
 
-      PocketBaseConnection.setHooks(hook, hook);
+      PocketBaseConnection.setHooks(preCreationHook: hook, preUpdateHook: hook);
 
       expect(HelperUtils.preCreationHook, equals(hook));
       expect(HelperUtils.preUpdateHook, equals(hook));
