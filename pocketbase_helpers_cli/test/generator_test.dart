@@ -400,4 +400,40 @@ void main() {
       );
     });
   });
+
+  group('partOfPath', () {
+    test('uses partOfPath if provided', () {
+      final generator = ModelGenerator(
+        schema: [],
+        jsonMapBehavior: JsonMapBehavior.fromJson,
+        partOfPath: 'models.dart',
+      );
+
+      final lib = generator.buildLibrary();
+
+      expect(
+        lib.directives.any(
+          (d) => d.type == DirectiveType.partOf && d.url == 'models.dart',
+        ),
+        isTrue,
+      );
+    });
+
+    test('defaults to serializables_spec.dart if not provided', () {
+      final generator = ModelGenerator(
+        schema: [],
+        jsonMapBehavior: JsonMapBehavior.fromJson,
+      );
+      final lib = generator.buildLibrary();
+
+      expect(
+        lib.directives.any(
+          (d) =>
+              d.type == DirectiveType.partOf &&
+              d.url == 'serializables_spec.dart',
+        ),
+        isTrue,
+      );
+    });
+  });
 }

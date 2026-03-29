@@ -14,12 +14,15 @@ class ModelGenerator {
   const ModelGenerator({
     required this.schema,
     this.jsonMapBehavior = JsonMapBehavior.none,
+    this.partOfPath,
   });
 
   /// The jsonDecoded pocketbase schema
   final List<dynamic> schema;
 
   final JsonMapBehavior jsonMapBehavior;
+
+  final String? partOfPath;
 
   /// Generate the class definitions from [schema] as a string.
   String generate() {
@@ -36,12 +39,13 @@ class ModelGenerator {
 
   /// Build the [Library] for the schema.
   Library buildLibrary() {
+    final partOf = partOfPath ?? 'serializables_spec.dart';
     return Library(
       (l) => l
         ..comments.addAll([
           'GENERATED CODE - DO NOT MODIFY BY HAND',
           'This file contains custom json serializable models.',
-          'add a `serializables_spec.dart` file next to this file to add imports for the missing types',
+          'add a `$partOf` file next to this file to add imports for the missing types',
         ])
         ..directives.addAll([
           if (jsonMapBehavior == .none)
@@ -50,8 +54,7 @@ class ModelGenerator {
             Directive.import(
               'package:pocketbase_helpers/pocketbase_helpers.dart',
             ),
-          if (jsonMapBehavior != .none)
-            Directive.partOf('serializables_spec.dart'),
+          if (jsonMapBehavior != .none) Directive.partOf(partOf),
         ])
         ..body.addAll(_generateLibraryBody()),
     );

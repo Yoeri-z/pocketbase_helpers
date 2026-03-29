@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:args/args.dart';
+import 'package:path/path.dart' as path;
 import 'package:pocketbase_helpers_cli/pocketbase_helpers_cli.dart';
 
 final parser = ArgParser()
@@ -52,28 +53,57 @@ void main(List<String> arguments) {
     exit(1);
   }
 
+  String? partOfPath;
+  if (withFromJson || withFromMap) {
+    partOfPath = _getPartOfPath(outputPath);
+  }
+
   final List<dynamic> schema = _parseSchema(schemaPath);
 
-  print('Generating models from $schemaPath...');
   final generator = ModelGenerator(
     schema: schema,
     jsonMapBehavior: withFromMap
-        ? .fromMap
+        ? JsonMapBehavior.fromMap
         : withFromJson
-        ? .fromJson
-        : .none,
+        ? JsonMapBehavior.fromJson
+        : JsonMapBehavior.none,
+    partOfPath: partOfPath,
   );
-  final output = generator.generate();
 
-  _writeToFile(output, outputPath);
+  print('Generating models from $schemaPath...');
+  var output = generator.generate();
 
+  var outputFile = File(outputPath);
+  outputFile.createSync(recursive: true);
+  outputFile.writeAsStringSync(output);
+
+  if (partOfPath != null) {
+    outputFile = File(path.join(path.dirname(outputPath), partOfPath));
+    if (!outputFile.existsSync()) {
+      output =
+          '// This library provides imports for $partOfPath\n'
+          'import "package:pocketbase/pocketbase.dart";\n'
+          'import "package:pocketbase_helpers/pocketbase_helpers.dart";\n'
+          '\n'
+          'part "${path.basename(outputPath)}";';
+
+      outputFile.createSync(recursive: true);
+      outputFile.writeAsStringSync(output);
+    }
+  }
   print('Successfully generated models to $outputPath');
 }
 
-void _writeToFile(String output, String outputPath) {
-  final outputFile = File(outputPath);
-  outputFile.parent.createSync(recursive: true);
-  outputFile.writeAsStringSync(output);
+String? _getPartOfPath(String outputPath) {
+  final fileName = path.basename(outputPath);
+  final parts = fileName.split('.');
+  if (parts.length < 3) {
+    print(
+      'Error: When using --with-from-json or --with-from-map, the output file name must be of format file_name.something.dart (e.g. models.g.dart)',
+    );
+    exit(1);
+  }
+  return '${parts.first}.dart';
 }
 
 List<dynamic> _parseSchema(String schemaPath) {

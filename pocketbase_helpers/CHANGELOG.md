@@ -1,3 +1,7 @@
+## 0.10.1
+
+- Updated docs to match the new version of the cli.
+
 ## 0.10.0
 
 - Made parameters on `PocketBaseConnection.setHooks()` named.

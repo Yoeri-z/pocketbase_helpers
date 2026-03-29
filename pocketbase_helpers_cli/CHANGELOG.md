@@ -1,3 +1,8 @@
+## 0.9.0
+
+- Changed behavior of the --with-from-map and --with-from-json flags to require a three part file name.
+  This makes the part of directive dynamic instead of static.
+
 ## 0.8.0
 
 - Made parameters in the generated realtime helper builder named.

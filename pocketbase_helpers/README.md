@@ -389,42 +389,40 @@ Because these JSON fields often point to other custom classes in your project, t
 
 ### 1. Run the Generator
 
-Add the `--with-from-json` flag to your command.
+Add the `--with-from-json` flag to your command. The output file must be of format `file_name.something.dart`, an example would be `models.g.dart`.
 
 ```bash
-pb_generate.dart -o "./lib/models/generated.dart" --with-from-json
+pb_generate.dart -o "./lib/models/models.g.dart" --with-from-json
 ```
 
 ### 2. Create your "spec" File
 
-Create a new file named `serializables_spec.dart` in the same folder as your generated file. This file will manage all the imports for the generated file.
+Create a new file named `models.dart` in the same folder as your generated file. This file will manage all the imports for the generated file.
 
 **File Structure:**
 
 ```text
 lib/
 └── models/
-    ├── serializables_spec.dart <-- You create this
-    └── generated.dart   <-- The CLI creates this
+    ├── models.dart <-- Imports should go here
+    └── models.g.dart   <-- The CLI creates models here
 ```
 
 ### 3. Connect the Files
 
-Inside your `serializables_spec.dart` file, you need to do two things:
+If a `models.dart` file did not exist yet the cli will automatically create one with the correct format.
 
-1. **Import** everything your models need.
-2. **Link** to the generated file using the `part` keyword.
-
-In the end your `serializables_spec.dart` should look something like this:
+In the end your `models.dart` should look something like this:
 
 ```dart
-// lib/models/serializables_spec.dart
+// lib/models/models.dart
 
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 import 'package:my_app/models/my_custom_class.dart'; // Your custom types
 
 // This links the two files together
-part 'generated.dart';
+part 'models.g.dart';
 ```
 
 ---
