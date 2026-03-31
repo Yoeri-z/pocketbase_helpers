@@ -44,8 +44,10 @@ class ModelGenerator {
       (l) => l
         ..comments.addAll([
           'GENERATED CODE - DO NOT MODIFY BY HAND',
-          'This file contains custom json serializable models.',
-          'add a `$partOf` file next to this file to add imports for the missing types',
+          if (jsonMapBehavior != .none)
+            'This file contains custom json serializable models.',
+          if (jsonMapBehavior != .none)
+            'add a `$partOf` file next to this file to add imports for the missing types',
         ])
         ..directives.addAll([
           if (jsonMapBehavior == .none)
