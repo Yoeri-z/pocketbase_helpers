@@ -1,5 +1,4 @@
 import 'package:mocktail/mocktail.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 import 'package:test/test.dart';
 

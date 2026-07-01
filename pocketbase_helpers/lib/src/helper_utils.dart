@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 import 'package:pocketbase_helpers/src/io_only/export.dart' as io;
+import 'package:pocketbase_helpers/src/pocketbase_connection.dart';
 
 /// A hook that is used to intercept the raw create or update map before it is sent to the pocketbase server.
 typedef HelperHook =
