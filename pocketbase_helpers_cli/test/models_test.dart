@@ -1,7 +1,6 @@
-import 'package:pocketbase_helpers_cli/pocketbase_helpers_cli.dart';
-import 'package:pocketbase_helpers_cli/src/collection.dart';
-import 'package:pocketbase_helpers_cli/src/field.dart';
 import 'package:test/test.dart';
+
+import 'package:pocketbase_helpers_cli/pocketbase_helpers_cli.dart';
 
 import 'utils.dart';
 

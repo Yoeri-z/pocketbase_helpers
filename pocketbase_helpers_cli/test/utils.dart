@@ -1,6 +1,5 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:pocketbase_helpers_cli/pocketbase_helpers_cli.dart';
-import 'package:pocketbase_helpers_cli/src/field.dart';
 
 /// Emits a [Spec] into its Dart source code string.
 String emit(Spec spec) {
@@ -26,7 +25,7 @@ PocketBaseField createField({
     'required': required,
     'maxSelect': maxSelect,
     'onlyInt': onlyInt,
-    if (extra != null) ...extra,
+    ...?extra,
   });
 }
 
@@ -85,6 +84,8 @@ Library genLibrary(
     },
   ];
 
-  return ModelGenerator(schema: schema, jsonMapBehavior: jsonMapBehavior)
-      .buildLibrary();
+  return ModelGenerator(
+    schema: schema,
+    jsonMapBehavior: jsonMapBehavior,
+  ).buildLibrary();
 }

@@ -1,3 +1,6 @@
+## 0.10.0
+- removed pocketbase import declaration because version `0.11.0` of `pocketbase_helpers` re-exports it.
+
 ## 0.9.0
 
 - Changed behavior of the --with-from-map and --with-from-json flags to require a three part file name.

@@ -1,6 +1,6 @@
 name: pocketbase_helpers_cli
 description: A cli for pocketbase_helpers, can automatically generate models from a pocketbase schema json.
-version: 0.9.0
+version: 0.10.0
 repository: https://github.com/Yoeri-z/pocketbase_helpers
 topics:
   - pocketbase
@@ -18,10 +18,10 @@ dependencies:
   code_builder: ^4.11.1
   dart_style: ^3.1.7
   path: ^1.9.0
-  pocketbase: ^0.23.2
+  pocketbase: ^0.24.0
 
 dev_dependencies:
-  analyzer: ^10.2.0
+  pocketbase_helpers: ^0.11.0
+  analyzer: ^13.3.0
   lints: ^6.0.0
-  pocketbase_helpers: ^0.8.0
   test: ^1.25.6

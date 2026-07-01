@@ -51,8 +51,6 @@ class ModelGenerator {
         ])
         ..directives.addAll([
           if (jsonMapBehavior == .none)
-            Directive.import('package:pocketbase/pocketbase.dart'),
-          if (jsonMapBehavior == .none)
             Directive.import(
               'package:pocketbase_helpers/pocketbase_helpers.dart',
             ),
