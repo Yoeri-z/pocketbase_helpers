@@ -2,7 +2,6 @@
 // This file contains custom json serializable models.
 // add a `serializables_spec.dart` file next to this file to add imports for the missing types
 
-import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 
 /// Model for the `users` collection.
@@ -50,15 +49,15 @@ class User implements PocketBaseRecord {
 
   @override
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'email': email,
-        'emailVisibility': emailVisibility,
-        'verified': verified,
-        'name': name,
-        'avatar': avatar,
-        'created': created.toIso8601String(),
-        'updated': updated.toIso8601String(),
-      };
+    'id': id,
+    'email': email,
+    'emailVisibility': emailVisibility,
+    'verified': verified,
+    'name': name,
+    'avatar': avatar,
+    'created': created.toIso8601String(),
+    'updated': updated.toIso8601String(),
+  };
 
   User copyWith({
     String? id,
@@ -81,10 +80,7 @@ class User implements PocketBaseRecord {
   }
 
   /// Get a file attached to this record with the name [fileName]
-  Uri getFileUrl({
-    required String fileName,
-    PocketBase? pocketBaseInstance,
-  }) =>
+  Uri getFileUrl({required String fileName, PocketBase? pocketBaseInstance}) =>
       HelperUtils.buildFileUrl(
         'users',
         id,
@@ -94,10 +90,7 @@ class User implements PocketBaseRecord {
 
   @override
   bool operator ==(Object other) =>
-      identical(
-        this,
-        other,
-      ) ||
+      identical(this, other) ||
       other is User &&
           runtimeType == other.runtimeType &&
           id == other.id &&
@@ -111,15 +104,15 @@ class User implements PocketBaseRecord {
 
   @override
   int get hashCode => Object.hashAll([
-        id,
-        email,
-        emailVisibility,
-        verified,
-        name,
-        avatar,
-        created,
-        updated,
-      ]);
+    id,
+    email,
+    emailVisibility,
+    verified,
+    name,
+    avatar,
+    created,
+    updated,
+  ]);
 
   /// Check whether or not the user is authenticated to the `users` collection
   static bool isAuthenticated([PocketBase? pocketBaseInstance]) {
@@ -132,10 +125,7 @@ class User implements PocketBaseRecord {
   /// Throws an assertion error if the user is not authenticated to this collection.
   static User getAuthenticated([PocketBase? pocketBaseInstance]) {
     final pb = pocketBaseInstance ?? PocketBaseConnection.pb;
-    assert(
-      isAuthenticated(pb),
-      'User is not authenticated yet.',
-    );
+    assert(isAuthenticated(pb), 'User is not authenticated yet.');
     return fromMap(HelperUtils.getRecordJson(pb.authStore.record!));
   }
 }
@@ -154,10 +144,7 @@ abstract final class Users {
       );
 
   /// Gets the [RealtimeHelper] for the `users` collection
-  static RealtimeHelper realtime({
-    PocketBase? pb,
-    Duration? debounce,
-  }) =>
+  static RealtimeHelper realtime({PocketBase? pb, Duration? debounce}) =>
       RealtimeHelper(
         pocketBaseInstance: pb,
         collection: 'users',
@@ -167,23 +154,22 @@ abstract final class Users {
 
   ///Gets the [AuthHelper] for the `users` collection
   static AuthHelper<User> auth([PocketBase? pocketBaseInstance]) => AuthHelper(
-        pocketBaseInstance: pocketBaseInstance,
-        collection: 'users',
-        mapper: User.fromMap,
-      );
+    pocketBaseInstance: pocketBaseInstance,
+    collection: 'users',
+    mapper: User.fromMap,
+  );
 
   /// Access the file api for the `avatar` field
   static SingleFileHelper<User> avatarApi(
     String id, [
     PocketBase? pocketBaseInstance,
-  ]) =>
-      FileHelper<User>(
-        pocketBaseInstance: pocketBaseInstance,
-        collection: 'users',
-        id: id,
-        field: 'avatar',
-        mapper: User.fromMap,
-      );
+  ]) => FileHelper<User>(
+    pocketBaseInstance: pocketBaseInstance,
+    collection: 'users',
+    id: id,
+    field: 'avatar',
+    mapper: User.fromMap,
+  );
 }
 
 /// Model for the `posts` collection.
@@ -222,9 +208,10 @@ class Post implements PocketBaseRecord {
       title: (map['title'] as String),
       content: (map['content'] as String?),
       thumbnail: (map['thumbnail'] as String?),
-      attachments: (map['attachments'] as List<dynamic>)
-          .map((e) => (e as String))
-          .toList(),
+      attachments:
+          (map['attachments'] as List<dynamic>)
+              .map((e) => (e as String))
+              .toList(),
       creatorId: (map['creator_id'] as String?),
       created: DateTime.parse((map['created'] as String)),
       updated: DateTime.parse((map['updated'] as String)),
@@ -233,15 +220,15 @@ class Post implements PocketBaseRecord {
 
   @override
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'title': title,
-        'content': content,
-        'thumbnail': thumbnail,
-        'attachments': attachments,
-        'creator_id': creatorId,
-        'created': created.toIso8601String(),
-        'updated': updated.toIso8601String(),
-      };
+    'id': id,
+    'title': title,
+    'content': content,
+    'thumbnail': thumbnail,
+    'attachments': attachments,
+    'creator_id': creatorId,
+    'created': created.toIso8601String(),
+    'updated': updated.toIso8601String(),
+  };
 
   Post copyWith({
     String? id,
@@ -264,10 +251,7 @@ class Post implements PocketBaseRecord {
   }
 
   /// Get a file attached to this record with the name [fileName]
-  Uri getFileUrl({
-    required String fileName,
-    PocketBase? pocketBaseInstance,
-  }) =>
+  Uri getFileUrl({required String fileName, PocketBase? pocketBaseInstance}) =>
       HelperUtils.buildFileUrl(
         'posts',
         id,
@@ -277,35 +261,29 @@ class Post implements PocketBaseRecord {
 
   @override
   bool operator ==(Object other) =>
-      identical(
-        this,
-        other,
-      ) ||
+      identical(this, other) ||
       other is Post &&
           runtimeType == other.runtimeType &&
           id == other.id &&
           title == other.title &&
           content == other.content &&
           thumbnail == other.thumbnail &&
-          _listEquals(
-            attachments,
-            other.attachments,
-          ) &&
+          _listEquals(attachments, other.attachments) &&
           creatorId == other.creatorId &&
           created == other.created &&
           updated == other.updated;
 
   @override
   int get hashCode => Object.hashAll([
-        id,
-        title,
-        content,
-        thumbnail,
-        Object.hashAll(attachments),
-        creatorId,
-        created,
-        updated,
-      ]);
+    id,
+    title,
+    content,
+    thumbnail,
+    Object.hashAll(attachments),
+    creatorId,
+    created,
+    updated,
+  ]);
 }
 
 /// Helper for the `posts` collection.
@@ -322,10 +300,7 @@ abstract final class Posts {
       );
 
   /// Gets the [RealtimeHelper] for the `posts` collection
-  static RealtimeHelper realtime({
-    PocketBase? pb,
-    Duration? debounce,
-  }) =>
+  static RealtimeHelper realtime({PocketBase? pb, Duration? debounce}) =>
       RealtimeHelper(
         pocketBaseInstance: pb,
         collection: 'posts',
@@ -337,27 +312,25 @@ abstract final class Posts {
   static SingleFileHelper<Post> thumbnailApi(
     String id, [
     PocketBase? pocketBaseInstance,
-  ]) =>
-      FileHelper<Post>(
-        pocketBaseInstance: pocketBaseInstance,
-        collection: 'posts',
-        id: id,
-        field: 'thumbnail',
-        mapper: Post.fromMap,
-      );
+  ]) => FileHelper<Post>(
+    pocketBaseInstance: pocketBaseInstance,
+    collection: 'posts',
+    id: id,
+    field: 'thumbnail',
+    mapper: Post.fromMap,
+  );
 
   /// Access the file api for the `attachments` field
   static MultiFileHelper<Post> attachmentsApi(
     String id, [
     PocketBase? pocketBaseInstance,
-  ]) =>
-      FileHelper<Post>(
-        pocketBaseInstance: pocketBaseInstance,
-        collection: 'posts',
-        id: id,
-        field: 'attachments',
-        mapper: Post.fromMap,
-      );
+  ]) => FileHelper<Post>(
+    pocketBaseInstance: pocketBaseInstance,
+    collection: 'posts',
+    id: id,
+    field: 'attachments',
+    mapper: Post.fromMap,
+  );
 }
 
 /// Static class containing all the string literals for your pocketbase collections.
@@ -369,10 +342,7 @@ abstract final class Collection {
   static const String posts = 'posts';
 }
 
-bool _listEquals<T>(
-  List<T>? a,
-  List<T>? b,
-) {
+bool _listEquals<T>(List<T>? a, List<T>? b) {
   if (a == null) return b == null;
   if (b == null || a.length != b.length) return false;
   if (identical(a, b)) return true;

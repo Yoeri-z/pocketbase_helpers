@@ -1,5 +1,6 @@
 library;
 
+export 'package:pocketbase/pocketbase.dart';
 export 'src/shared.dart';
 export 'src/collection_helper.dart';
 export 'src/helper_utils.dart';

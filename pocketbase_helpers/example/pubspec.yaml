@@ -9,7 +9,6 @@ environment:
 # Add regular dependencies here.
 dependencies:
   dart_mappable: ^4.5.0
-  pocketbase: ^0.23.0
   pocketbase_helpers:
     path: ../
 

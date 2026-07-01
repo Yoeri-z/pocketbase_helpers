@@ -1,3 +1,7 @@
+## 0.11.0
+- upgrade dependencies
+- now reexports the `pocketbase` api
+
 ## 0.10.1
 
 - Updated docs to match the new version of the cli.
