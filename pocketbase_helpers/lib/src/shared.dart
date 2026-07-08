@@ -127,6 +127,9 @@ class GeoPoint {
   int get hashCode => Object.hashAll([lon, lat]);
 
   static GeoPoint fromMap(dynamic map) {
-    return GeoPoint(lon: map['lon'] as double, lat: map['lat'] as double);
+    return GeoPoint(
+      lon: double.parse(map['lon']),
+      lat: double.parse(map['lat']),
+    );
   }
 }

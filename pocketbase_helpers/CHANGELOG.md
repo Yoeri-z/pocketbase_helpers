@@ -1,3 +1,6 @@
+## 0.11.1
+- made geopoint use a double.parse instead of a typecast to double.
+
 ## 0.11.0
 - upgrade dependencies
 - now reexports the `pocketbase` api
