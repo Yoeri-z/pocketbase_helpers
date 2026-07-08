@@ -1,3 +1,6 @@
+## 0.11.2
+- made geopoint parse an explicitly string casted map value.
+
 ## 0.11.1
 - made geopoint use a double.parse instead of a typecast to double.
 

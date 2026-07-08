@@ -128,8 +128,8 @@ class GeoPoint {
 
   static GeoPoint fromMap(dynamic map) {
     return GeoPoint(
-      lon: double.parse(map['lon']),
-      lat: double.parse(map['lat']),
+      lon: double.parse(map['lon'].toString()),
+      lat: double.parse(map['lat'].toString()),
     );
   }
 }
