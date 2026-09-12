@@ -324,17 +324,12 @@ HelperUtils.buildFileUrl(collection, recordId, fileName);
 
 ## Authentication
 
-Simplified auth workflows via `.auth()`. All methods handle errors themselves and return a result object containing a `status` (`AuthStatus`) and optionally the auth token and the authenticated `record` (if `AuthStatus` was `.ok`). This means that methods from the auth api do not have to be wrapped in try-catch blocks.
+Auth methods behave like their counterparts on the PocketBase API: they return the authenticated record (mapped to your model), the otp id, or nothing, and throw `PocketBaseException` (or in some cases `http.ClientException`) on failure.
 
 ```dart
 // Email/Password Login
-final result = await Users.auth().withPassword('user@example.com', 'password123');
-
-if (result.status == AuthStatus.ok) {
-  print('Authenticated: ${result.record!.name}');
-} else if (result.status == AuthStatus.incorrectCredentials) {
-  print('Invalid email or password');
-}
+final record = await Users.auth().withPassword('user@example.com', 'password123');
+print('Authenticated: ${record.name}');
 
 // OAuth2 Login (Google, GitHub, etc.)
 await Users.auth().withOAuth2('google', urlCallback: (url) async {
@@ -343,11 +338,9 @@ await Users.auth().withOAuth2('google', urlCallback: (url) async {
 
 // One-Time Password (OTP)
 // Request OTP
-final request = await Users.auth().requestOTP('user@example.com');
-if (request.status == AuthStatus.ok) {
-  // Submit code
-  final auth = await Users.auth().withOTP(request.otpId!, '123456');
-}
+final otpId = await Users.auth().requestOTP('user@example.com');
+// Submit code
+final record = await Users.auth().withOTP(otpId, '123456');
 
 // Verification & Password Resets
 await Users.auth().requestVerification('user@example.com');

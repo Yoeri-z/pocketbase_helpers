@@ -3,14 +3,10 @@ import 'package:pocketbase_helpers/src/helper_utils.dart';
 import 'package:pocketbase_helpers/src/pocketbase_connection.dart';
 import 'package:pocketbase_helpers/src/shared.dart';
 
-/// The final result from an authentication flow, if [status] is ok, the authenticated record is
-/// provided through [record].
-typedef RecordAuthResult<T> = ({AuthStatus status, String? token, T? record});
-
-/// The result from an otp request, if [status] is ok, the otpId is provided through [otpId].
-typedef OTPAuthResult = ({AuthStatus status, String? otpId});
-
 /// A helper to do authentication operations on a collection.
+///
+/// The methods behave like their counterparts on the [RecordService]: they
+/// return the authentication data (or throw) instead of catching errors.
 class AuthHelper<T extends Object> {
   /// A helper to do authentication operations on a collection.
   const AuthHelper({
@@ -37,37 +33,27 @@ class AuthHelper<T extends Object> {
   final String collection;
 
   /// Authenticate a record with email/username and password.
-  Future<RecordAuthResult<T>> withPassword(
+  Future<T> withPassword(
     String email,
     String password, {
     Map<String, String>? additionalExpansions,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    try {
-      final result = await pb
-          .collection(collection)
-          .authWithPassword(
-            email,
-            password,
-            fields: _fields?.join(','),
-            expand: HelperUtils.buildExpansionString(_expansions),
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
+    final result = await pb.collection(collection).authWithPassword(
+          email,
+          password,
+          fields: _fields?.join(','),
+          expand: HelperUtils.buildExpansionString(_expansions),
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
 
-      return (
-        status: AuthStatus.ok,
-        token: result.token,
-        record: _mapper(HelperUtils.getRecordJson(result.record, _expansions)),
-      );
-    } catch (e) {
-      return (status: _authCatch(e), token: null, record: null);
-    }
+    return _mapper(HelperUtils.getRecordJson(result.record, _expansions));
   }
 
   /// Authenticate a record with OAuth2.
-  Future<RecordAuthResult<T>> withOAuth2(
+  Future<T> withOAuth2(
     String provider, {
     required void Function(Uri url) urlCallback,
     List<String> scopes = const [],
@@ -75,199 +61,133 @@ class AuthHelper<T extends Object> {
     Map<String, dynamic> query = const {},
     Map<String, String> headers = const {},
   }) async {
-    try {
-      final result = await pb
-          .collection(collection)
-          .authWithOAuth2(
-            provider,
-            urlCallback,
-            scopes: scopes,
-            createData: createData,
-            fields: _fields?.join(','),
-            expand: HelperUtils.buildExpansionString(_expansions),
-            query: query,
-            headers: headers,
-          );
+    final result = await pb.collection(collection).authWithOAuth2(
+      provider,
+      urlCallback,
+      scopes: scopes,
+      createData: createData,
+      fields: _fields?.join(','),
+      expand: HelperUtils.buildExpansionString(_expansions),
+      query: query,
+      headers: headers,
+    );
 
-      return (
-        status: AuthStatus.ok,
-        token: result.token,
-        record: _mapper(HelperUtils.getRecordJson(result.record, _expansions)),
-      );
-    } catch (e) {
-      return (status: _authCatch(e), token: null, record: null);
-    }
+    return _mapper(HelperUtils.getRecordJson(result.record, _expansions));
   }
 
   /// Authenticate a record with OTP.
-  Future<RecordAuthResult<T>> withOTP(
+  Future<T> withOTP(
     String otpId,
     String code, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    try {
-      final result = await pb
-          .collection(collection)
-          .authWithOTP(
-            otpId,
-            code,
-            fields: _fields?.join(','),
-            expand: HelperUtils.buildExpansionString(_expansions),
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
+    final result = await pb.collection(collection).authWithOTP(
+      otpId,
+      code,
+      fields: _fields?.join(','),
+      expand: HelperUtils.buildExpansionString(_expansions),
+      query: query ?? const {},
+      headers: headers ?? const {},
+    );
 
-      return (
-        status: AuthStatus.ok,
-        token: result.token,
-        record: _mapper(HelperUtils.getRecordJson(result.record, _expansions)),
-      );
-    } catch (e) {
-      return (status: _authCatch(e), token: null, record: null);
-    }
+    return _mapper(HelperUtils.getRecordJson(result.record, _expansions));
   }
 
-  /// Request OTP for a specific email.
-  Future<OTPAuthResult> requestOTP(
+  /// Request OTP for a specific email, returns the otp id.
+  Future<String> requestOTP(
     String email, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) async {
-    try {
-      final response = await pb
-          .collection(collection)
-          .requestOTP(
-            email,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
-      return (status: AuthStatus.ok, otpId: response.otpId);
-    } catch (e) {
-      return (status: _authCatch(e), otpId: null);
-    }
+  }) {
+    return pb
+        .collection(collection)
+        .requestOTP(
+          email,
+          query: query ?? const {},
+          headers: headers ?? const {},
+        )
+        .then((response) => response.otpId);
   }
 
   /// Request a verification email.
-  Future<AuthStatus> requestVerification(
+  Future<void> requestVerification(
     String email, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) async {
-    try {
-      await pb
-          .collection(collection)
-          .requestVerification(
-            email,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
-      return AuthStatus.ok;
-    } catch (e) {
-      return _authCatch(e);
-    }
+  }) {
+    return pb
+        .collection(collection)
+        .requestVerification(
+          email,
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
   }
 
   /// Confirm a verification request.
-  Future<AuthStatus> confirmVerification(
+  Future<void> confirmVerification(
     String token, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) async {
-    try {
-      await pb
-          .collection(collection)
-          .confirmVerification(
-            token,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
-      return AuthStatus.ok;
-    } catch (e) {
-      return _authCatch(e);
-    }
+  }) {
+    return pb
+        .collection(collection)
+        .confirmVerification(
+          token,
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
   }
 
   /// Request a password reset email.
-  Future<AuthStatus> requestPasswordReset(
+  Future<void> requestPasswordReset(
     String email, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) async {
-    try {
-      await pb
-          .collection(collection)
-          .requestPasswordReset(
-            email,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
-      return AuthStatus.ok;
-    } catch (e) {
-      return _authCatch(e);
-    }
+  }) {
+    return pb
+        .collection(collection)
+        .requestPasswordReset(
+          email,
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
   }
 
   /// Confirm a password reset request.
-  Future<AuthStatus> confirmPasswordReset(
+  Future<void> confirmPasswordReset(
     String token,
     String password,
     String passwordConfirm, {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
-  }) async {
-    try {
-      await pb
-          .collection(collection)
-          .confirmPasswordReset(
-            token,
-            password,
-            passwordConfirm,
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
-      return AuthStatus.ok;
-    } catch (e) {
-      return _authCatch(e);
-    }
+  }) {
+    return pb
+        .collection(collection)
+        .confirmPasswordReset(
+          token,
+          password,
+          passwordConfirm,
+          query: query ?? const {},
+          headers: headers ?? const {},
+        );
   }
 
   /// Refresh the token of the authenticated record currently registered in [pb].
-  Future<RecordAuthResult<T>> refresh({
+  Future<T> refresh({
     Map<String, dynamic>? body,
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    try {
-      final result = await pb
-          .collection(collection)
-          .authRefresh(
-            expand: HelperUtils.buildExpansionString(_expansions),
-            fields: _fields?.join(','),
-            body: body ?? const {},
-            query: query ?? const {},
-            headers: headers ?? const {},
-          );
+    final result = await pb.collection(collection).authRefresh(
+      expand: HelperUtils.buildExpansionString(_expansions),
+      fields: _fields?.join(','),
+      body: body ?? const {},
+      query: query ?? const {},
+      headers: headers ?? const {},
+    );
 
-      return (
-        status: AuthStatus.ok,
-        token: result.token,
-        record: _mapper(HelperUtils.getRecordJson(result.record, _expansions)),
-      );
-    } catch (e) {
-      return (status: _authCatch(e), token: null, record: null);
-    }
-  }
-
-  AuthStatus _authCatch(Object e) {
-    if (e is ClientException) {
-      if (e.statusCode == 400 || e.statusCode == 404) {
-        return AuthStatus.incorrectCredentials;
-      }
-      if (e.statusCode == 429) {
-        return AuthStatus.tooManyOtpRequests;
-      }
-    }
-    return AuthStatus.serverError;
+    return _mapper(HelperUtils.getRecordJson(result.record, _expansions));
   }
 }

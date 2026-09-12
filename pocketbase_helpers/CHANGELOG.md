@@ -1,3 +1,7 @@
+## 0.12.0
+- Breaking: auth helper methods no longer catch errors and return a result object, they now behave like the underlying pocketbase api: return the mapped record, the otp id or void, and throw on failure.
+- Removed the now unused `AuthStatus` enum.
+
 ## 0.11.2
 - made geopoint parse an explicitly string casted map value.
 

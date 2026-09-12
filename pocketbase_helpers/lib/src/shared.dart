@@ -85,19 +85,6 @@ abstract interface class PocketBaseRecord {
   Map<String, dynamic> toMap();
 }
 
-/// Result of an authentication process.
-enum AuthStatus {
-  ///The authentication was succesfull.
-  ok,
-
-  /// The authentication failed because the request was rejected by the server.
-  incorrectCredentials,
-
-  tooManyOtpRequests,
-
-  /// The authentication failed because the server could not be reached or had an internal error.
-  serverError,
-}
 
 /// Typesafe class for the GeoPoint field.
 class GeoPoint {

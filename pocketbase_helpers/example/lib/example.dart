@@ -27,18 +27,11 @@ void main(List<String> args) async {
     print(post.title);
   }
 
-  // Authenticate
-  final result = await Users.auth().withPassword(
+  // Authenticate, throws on failure
+  await Users.auth().withPassword(
     'johndoe@mail.com',
     'supersecretpassword',
   );
-
-  // Return if not authenticated
-  if (result.status != AuthStatus.ok) {
-    print('Authentication failed for reason ${result.status}');
-    PocketBaseConnection.close();
-    return;
-  }
 
   // Make a post
   var post = await Posts.api().create(

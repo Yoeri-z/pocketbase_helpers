@@ -1,5 +1,4 @@
 import 'package:faker/faker.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 
 class DummyRecord implements PocketBaseRecord {
