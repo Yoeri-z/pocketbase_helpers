@@ -1,22 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
 import 'package:pocketbase_helpers_cli/pocketbase_helpers_cli.dart';
 
 final parser = ArgParser()
-  ..addOption(
-    'schema',
-    abbr: 's',
-    help: 'Path to the pb_schema.json file.',
-    defaultsTo: 'pb_schema.json',
-  )
+  ..addOption('source', abbr: 's', help: 'Path to the pb_schema.json file.')
   ..addOption(
     'output',
     abbr: 'o',
     help: 'Path where the models.dart file should be generated.',
-    defaultsTo: 'lib/models.dart',
   )
+  ..addOption(
+    'port',
+    abbr: 'p',
+    help: 'Port of the PocketBase API running on localhost.',
+  )
+  ..addOption('email', abbr: 'e', help: 'PocketBase superuser email.')
+  ..addOption('password', abbr: 'w', help: 'PocketBase superuser password.')
   ..addFlag(
     'with-from-json',
     negatable: false,
@@ -32,16 +34,30 @@ final parser = ArgParser()
   )
   ..addFlag('help', abbr: 'h', negatable: false, help: 'Show this help.');
 
-void main(List<String> arguments) {
-  ArgResults argResults = _parseArgs(arguments);
+Future<void> main(List<String> arguments) async {
+  ArgResults argResults;
+  try {
+    argResults = parser.parse(arguments);
+  } catch (e) {
+    print(e);
+    _showHelp(parser);
+    exit(1);
+  }
 
   if (argResults['help'] == true) {
     _showHelp(parser);
     return;
   }
 
-  final schemaPath = argResults['schema'] as String;
-  final outputPath = argResults['output'] as String;
+  // The pb_generate.yaml config file fills in any missing flags.
+  final config = readConfig('.');
+
+  final source = _string(argResults['source'] ?? config['source']);
+  final output =
+      _string(argResults['output'] ?? config['output']) ?? 'lib/models.dart';
+  final port = _int(argResults['port'] ?? config['port']);
+  final email = _string(argResults['email'] ?? config['email']);
+  final password = _string(argResults['password'] ?? config['password']);
 
   final withFromJson = argResults['with-from-json'] as bool;
   final withFromMap = argResults['with-from-map'] as bool;
@@ -55,10 +71,31 @@ void main(List<String> arguments) {
 
   String? partOfPath;
   if (withFromJson || withFromMap) {
-    partOfPath = _getPartOfPath(outputPath);
+    partOfPath = _getPartOfPath(output);
   }
 
-  final List<dynamic> schema = _parseSchema(schemaPath);
+  List<dynamic> schema;
+  try {
+    if (port != null || email != null || password != null) {
+      if (port == null || email == null || password == null) {
+        print(
+          'Error: --port, --email and --password must all be set to fetch '
+          'the schema from the PocketBase API.',
+        );
+        exit(1);
+      }
+      schema = await fetchCollections(
+        port: port,
+        email: email,
+        password: password,
+      );
+    } else {
+      schema = _parseSchema(source ?? 'pb_schema.json');
+    }
+  } catch (e) {
+    print('Error: $e');
+    exit(1);
+  }
 
   final generator = ModelGenerator(
     schema: schema,
@@ -70,29 +107,34 @@ void main(List<String> arguments) {
     partOfPath: partOfPath,
   );
 
-  print('Generating models from $schemaPath...');
-  var output = generator.generate();
+  print('Generating models...');
+  var output_ = generator.generate();
 
-  var outputFile = File(outputPath);
+  var outputFile = File(output);
   outputFile.createSync(recursive: true);
-  outputFile.writeAsStringSync(output);
+  outputFile.writeAsStringSync(output_);
 
   if (partOfPath != null) {
-    outputFile = File(path.join(path.dirname(outputPath), partOfPath));
+    outputFile = File(path.join(path.dirname(output), partOfPath));
     if (!outputFile.existsSync()) {
-      output =
+      output_ =
           '// This library provides imports for $partOfPath\n'
           'import "package:pocketbase/pocketbase.dart";\n'
           'import "package:pocketbase_helpers/pocketbase_helpers.dart";\n'
           '\n'
-          'part "${path.basename(outputPath)}";';
+          'part "${path.basename(output)}";';
 
       outputFile.createSync(recursive: true);
-      outputFile.writeAsStringSync(output);
+      outputFile.writeAsStringSync(output_);
     }
   }
-  print('Successfully generated models to $outputPath');
+  print('Successfully generated models to $output');
 }
+
+String? _string(Object? value) => value?.toString();
+
+int? _int(Object? value) =>
+    value == null ? null : int.tryParse(value.toString());
 
 String? _getPartOfPath(String outputPath) {
   final fileName = path.basename(outputPath);
@@ -114,27 +156,7 @@ List<dynamic> _parseSchema(String schemaPath) {
     exit(1);
   }
 
-  List<dynamic> schema;
-  try {
-    schema = jsonDecode(schemaFile.readAsStringSync()) as List<dynamic>;
-  } catch (e) {
-    print('Error: Failed to parse schema JSON: $e');
-    exit(1);
-  }
-  return schema;
-}
-
-ArgResults _parseArgs(List<String> arguments) {
-  ArgResults argResults;
-  try {
-    argResults = parser.parse(arguments);
-  } catch (e) {
-    print(e);
-    _showHelp(parser);
-    exit(1);
-  }
-
-  return argResults;
+  return jsonDecode(schemaFile.readAsStringSync()) as List<dynamic>;
 }
 
 void _showHelp(ArgParser parser) {

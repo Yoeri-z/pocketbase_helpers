@@ -1,3 +1,6 @@
+## 0.12.1
+- documented the new `pb_generate` model generation options: fetching collections directly from a PocketBase API running on localhost (`--port`, `--email`, `--password`) and the `pb_generate.yaml` config file. See the new [Model Generation](https://github.com/Yoeri-z/pocketbase_helpers/tree/main/pocketbase_helpers#model-generation) section in the readme.
+
 ## 0.12.0
 - Breaking: auth helper methods no longer catch errors and return a result object, they now behave like the underlying pocketbase api: return the mapped record, the otp id or void, and throw on failure.
 - Removed the now unused `AuthStatus` enum.

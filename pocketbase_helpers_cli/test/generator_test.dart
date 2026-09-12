@@ -250,25 +250,30 @@ void main() {
         final lib = genLibrary(type, maxSelect: 2);
         final cls = lib.body.whereType<Class>().first;
 
-        final param = cls.constructors.first.optionalParameters
-            .firstWhere((p) => p.name == 'f');
+        final param = cls.constructors.first.optionalParameters.firstWhere(
+          (p) => p.name == 'f',
+        );
 
         expect(param.required, isFalse);
         expect(normalize(emit(param.defaultTo!)), 'const[]');
       });
 
-      test('multi is never required in constructor even when field is required', () {
-        final lib = genLibrary(type, maxSelect: 2, required: true);
-        final cls = lib.body.whereType<Class>().first;
+      test(
+        'multi is never required in constructor even when field is required',
+        () {
+          final lib = genLibrary(type, maxSelect: 2, required: true);
+          final cls = lib.body.whereType<Class>().first;
 
-        final param = cls.constructors.first.optionalParameters
-            .firstWhere((p) => p.name == 'f');
+          final param = cls.constructors.first.optionalParameters.firstWhere(
+            (p) => p.name == 'f',
+          );
 
-        // Even required list fields are not required constructor params,
-        // they always get a default empty list.
-        expect(param.required, isFalse);
-        expect(normalize(emit(param.defaultTo!)), 'const[]');
-      });
+          // Even required list fields are not required constructor params,
+          // they always get a default empty list.
+          expect(param.required, isFalse);
+          expect(normalize(emit(param.defaultTo!)), 'const[]');
+        },
+      );
     });
   }
 

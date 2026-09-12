@@ -1,3 +1,9 @@
+## 0.11.1
+- the CLI can now fetch collections directly from a PocketBase API running on localhost, by passing `--port/-p`, `--email/-e` and `--password/-w` (superuser login) instead of a schema file.
+- for safety, API mode always connects to `http://localhost:<port>`: specifying a hostname or URL is impossible.
+- added a `pb_generate.yaml` config file that fills in any missing flags (`source`, `port`, `email`, `password`, `output`).
+- renamed the `--schema` flag to `--source` (the `-s` shorthand is unchanged).
+
 ## 0.10.1
 - list fields (relation/file/select with `maxSelect > 1`) now get a default empty list (`const []`) instead of being required constructor parameters.
 - removed unused test data files.

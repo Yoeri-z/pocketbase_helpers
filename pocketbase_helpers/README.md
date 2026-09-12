@@ -40,6 +40,8 @@ Export your schema from PocketBase (`pb_schema.json`) and run:
 pb_generate -s pb_schema.json -o lib/models.dart
 ```
 
+Alternatively, the CLI can fetch the schema directly from a PocketBase API running on your local machine — see [Model Generation](#model-generation).
+
 ## 3. Basic Usage
 
 ```dart
@@ -92,6 +94,7 @@ void main() async {
   - [File Handling](#file-handling)
   - [Authentication](#authentication)
   - [Relation Expansions](#relation-expansions)
+- [Model Generation](#model-generation)
 - [JSON field generation](#json-field-generation)
 - [Utilities](#utilities)
 - [Low-Level API](#low-level-api)
@@ -374,6 +377,57 @@ print('Post by ${post.user.name}');
 
 ---
 
+# Model Generation
+
+The `pb_generate` CLI creates your models from a PocketBase schema. It has two starting points that end in the same result:
+
+1. **API mode** — if `--port`, `--email` or `--password` is set (all three are required), the CLI logs in as a superuser and fetches the collection definitions from the PocketBase API running on `http://localhost:<port>`.
+2. **File mode** — otherwise the CLI reads the schema from `--source` (falling back to `pb_schema.json` in the working directory).
+
+```bash
+# From a local schema file
+pb_generate -s pb_schema.json -o lib/models.dart
+
+# From a PocketBase API running on localhost (superuser login)
+pb_generate -p 8090 -e admin@example.com -w hunter2 -o lib/models.dart
+```
+
+### Config file
+
+Any flags not provided on the command line are filled in from a `pb_generate.yaml` file in the working directory:
+
+```yaml
+source: pb_schema.json
+
+# ... or, to fetch from the API on localhost instead:
+port: 8090
+email: admin@example.com
+password: hunter2
+
+output: lib/models.dart
+```
+
+With this config file in place, simply running `pb_generate` is enough.
+
+### Safety: localhost only
+
+In API mode the CLI only ever connects to `http://localhost:<port>`. For safety reasons there is deliberately **no way** to configure a hostname or full URL. Not via the command line, not via the config file.
+
+### Options
+
+| Option             | Abbr | Default           | Description                                                                                                  |
+| ------------------ | ---- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| `--source`         | `-s` | `pb_schema.json`  | Path to the PocketBase schema JSON file.                                                                     |
+| `--output`         | `-o` | `lib/models.dart` | Path where the generated Dart file should be saved.                                                          |
+| `--port`           | `-p` |                   | Port of the PocketBase API running on localhost.                                                             |
+| `--email`          | `-e` |                   | PocketBase superuser email.                                                                                  |
+| `--password`       | `-w` |                   | PocketBase superuser password.                                                                               |
+| `--with-from-json` |      |                   | Assumes that json fields have serializable models with the same name and adds a .toJson and .fromJson call.  |
+| `--with-from-map`  |      |                   | Same as `--with-from-json` but with .toMap and .fromMap instead.                                             |
+| `--help`           | `-h` |                   | Show usage information.                                                                                      |
+
+---
+
 # json field generation
 
 If your PocketBase schema includes **JSON fields**, you can tell the generator to automatically create `fromJson` and `toJson` methods.
@@ -382,10 +436,10 @@ Because these JSON fields often point to other custom classes in your project, t
 
 ### 1. Run the Generator
 
-Add the `--with-from-json` flag to your command. The output file must be of format `file_name.something.dart`, an example would be `models.g.dart`.
+Add the `--with-from-json` flag to your command. The output file must be of format `file_name.something.dart`, an example would be `models.pb.dart`.
 
 ```bash
-pb_generate.dart -o "./lib/models/models.g.dart" --with-from-json
+pb_generate.dart -o "./lib/models/models.pb.dart" --with-from-json
 ```
 
 ### 2. Create your "spec" File
@@ -398,7 +452,7 @@ Create a new file named `models.dart` in the same folder as your generated file.
 lib/
 └── models/
     ├── models.dart <-- Imports should go here
-    └── models.g.dart   <-- The CLI creates models here
+    └── models.pb.dart   <-- The CLI creates models here
 ```
 
 ### 3. Connect the Files
@@ -415,7 +469,7 @@ import 'package:pocketbase_helpers/pocketbase_helpers.dart';
 import 'package:my_app/models/my_custom_class.dart'; // Your custom types
 
 // This links the two files together
-part 'models.g.dart';
+part 'models.pb.dart';
 ```
 
 ---
