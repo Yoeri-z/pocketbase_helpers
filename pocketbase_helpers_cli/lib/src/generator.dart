@@ -186,13 +186,17 @@ class ModelGenerator {
       (c) => c
         ..optionalParameters.addAll(
           fields.map((field) {
-            return Parameter(
-              (p) => p
+            return Parameter((p) {
+              p
                 ..name = field.fieldName
                 ..toThis = true
                 ..named = true
-                ..required = field.isDartRequired,
-            );
+                ..required = field.isDartRequired && !field.isList;
+
+              if (field.isList && field.isDartRequired) {
+                p.defaultTo = Code('const []');
+              }
+            });
           }),
         ),
     );

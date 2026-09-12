@@ -1,3 +1,8 @@
+## 0.10.1
+- list fields (relation/file/select with `maxSelect > 1`) now get a default empty list (`const []`) instead of being required constructor parameters.
+- removed unused test data files.
+- bumped analyzer dependency to `^14.4.0`.
+
 ## 0.10.0
 - removed pocketbase import declaration because version `0.11.0` of `pocketbase_helpers` re-exports it.
 
