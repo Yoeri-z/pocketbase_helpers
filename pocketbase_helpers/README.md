@@ -21,7 +21,7 @@ A powerful, type-safe Dart wrapper for **PocketBase**. Simplify your development
 ## 1. Installation
 
 ```bash
-dart pub add pocketbase pocketbase_helpers
+dart pub add pocketbase_helpers
 ```
 
 ## 2. Generate Models (Recommended)
@@ -34,13 +34,13 @@ Install the CLI:
 dart pub global activate pocketbase_helpers_cli
 ```
 
-Export your schema from PocketBase (`pb_schema.json`) and run:
+run it on your local pocketbase instance:
 
 ```bash
-pb_generate -s pb_schema.json -o lib/models.dart
+pb_generate -p 8090 -e admin@example.com -w localpassword -o lib/models.dart
 ```
 
-Alternatively, the CLI can fetch the schema directly from a PocketBase API running on your local machine — see [Model Generation](#model-generation).
+Alternatively, the CLI can also generate the schema from a schema json file — see [Model Generation](#model-generation).
 
 ## 3. Basic Usage
 
@@ -389,7 +389,7 @@ The `pb_generate` CLI creates your models from a PocketBase schema. It has two s
 pb_generate -s pb_schema.json -o lib/models.dart
 
 # From a PocketBase API running on localhost (superuser login)
-pb_generate -p 8090 -e admin@example.com -w hunter2 -o lib/models.dart
+pb_generate -p 8090 -e admin@example.com -w localpassword -o lib/models.dart
 ```
 
 ### Config file
